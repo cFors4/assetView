@@ -1,18 +1,14 @@
 import time
 from datetime import date
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
 import pandas as pd
 from IPython.core.display import HTML
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-from bs4 import BeautifulSoup
-from lxml import html
-from lxml import etree
-
 from secrets import *
+import json
 
 
 #Loads the driver
@@ -43,13 +39,30 @@ def login212(driver, url, username, password):
     password_field.send_keys(password)
     login_button.click()
 
-        
-#Buy button
-def buy():
-    pass
+def getdata212(driver):
+    print("trading 212 protfolio")
 
-#Sell button
-def sell():
+    total = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/div/div/label/label[2]")
+    total = int(total.text.replace(',',''))
+    profit = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[2]/div[2]/div[2]")
+    profit = profit.text
+
+    print(total)
+    profitData = profit.split()
+
+    netProfit = profitData[0][2:len(profitData[0])-3].replace(',','')
+    print(netProfit)
+    pecentageProfit = profitData[1][1:len(profitData[1])-1].replace('%','')
+    print(pecentageProfit)
+
+    cash = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[1]/div/div[2]/div[1]/div/span[2]")
+    cash = cash.text
+    cash = int(cash[1:len(cash)-3].replace(',',''))-int(total)
+    print(cash)
+    
+    return total
+        
+def plot():
     pass
     
 def main():
@@ -61,20 +74,20 @@ def main():
 
     driver = load_driver()
 
+    # while True: keep updating
     login212(driver, url, username, password)
     time.sleep(20)
-    # data212 = getdata212()
+    data212 = getdata212(driver)
     # loginPro
     # time.sleep(20)
     # dataPro = getdataPro()
     driver.get_screenshot_as_file("screenshot.png")
     # plot data
     
-    # while True:
-    #     time.sleep(1)
-    #     print(get_ticker(driver), get_bid(driver), end = "\r", flush = True)
+    
+    
 
-    driver.close()
+    # driver.close()
     driver.quit()
 
 if __name__ == "__main__":
