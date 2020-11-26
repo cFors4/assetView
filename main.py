@@ -6,8 +6,8 @@ from selenium.webdriver.chrome.options import Options
 
 from secrets import *
 
-import requests
-import json
+import csv
+import pandas
 
 def load_driver():
     chrome_options = Options()
@@ -63,26 +63,33 @@ def getdataPro(driver,url):
     time.sleep(5)                              
     fetch_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
     BTC = float(fetch_field)
-
+    #make secret
     bitcoin_api_url = 'https://www.google.com/search?q=bitcoin+price&oq=bitocin+pri&aqs=chrome.1.69i57j0i10i131i433i457j0i10i131i433l6.4397j1j4&sourceid=chrome&ie=UTF-8'
     driver.get(bitcoin_api_url)
     time.sleep(5)  
     BTC_field = driver.find_element_by_xpath('//*[@id="knowledge-currency__updatable-data-column"]/div[1]/div[2]/span[1]').text
     BTC_price = float(BTC_field.replace(',',''))
-    urlcash = "https://docs.google.com/spreadsheets/d/1Gm9oqiUFgddTm33flhOMajKeMZaAQYT7cSMHBvYdpJY/edit?folder=1AUaHi4waMcvD3rfZl6DmNX9PSFNUfro5#gid=958840544&range=D9"
+    #make secret
+    urlcash = urlPro9
     driver.get(urlcash)
     time.sleep(5)                              
     cash_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
     cash = float(cash_field)
 
-    return BTC_price*BTC,cash
+    avgPrice = 7700
+    costBasis = avgPrice*BTC
+    gain = (BTC_price*BTC)-costBasis
+    netPercentage = gain/costBasis
+
+    return BTC_price*BTC,gain,netPercentage,cash
 
     
 def main():
     today = date.today()
     url212 = "https://live.trading212.com/beta"
-    urlPro = "https://pro.coinbase.com/"
-    urlGooglePro = "https://docs.google.com/spreadsheets/d/1Gm9oqiUFgddTm33flhOMajKeMZaAQYT7cSMHBvYdpJY/edit?folder=1AUaHi4waMcvD3rfZl6DmNX9PSFNUfro5#gid=958840544&range=D8"
+    # urlPro = "https://pro.coinbase.com/"
+    #make secret
+    urlGooglePro = urlPro
     
     username = "connorsforsyth@gmail.com"
     password = password212
@@ -93,18 +100,43 @@ def main():
     #TRADING212
     login212(driver, url212, username, password)
     time.sleep(20)
-    total212,netProfit,pecentageProfit,cash = getdata212(driver)
-    driver.get_screenshot_as_file("trading212.png")
-    print(total212,netProfit,pecentageProfit,cash)
+    total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
 
     #BITCOIN
-    totalPro,cash = getdataPro(driver,urlGooglePro)
-    print(totalPro,cash)
-    
-    # plot data
-    
+    totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro)
+
+    #ETORO??
+    #nationwide??
+
+    print(total212,totalPro)
+    total = total212+totalPro
+    netProfit = netProfit212+netProfitPro
+    pieSlice212 = total212/total
+    pieSlicePro = totalPro/total
+    percentageProfit = netProfit/total
+    netCash = cash212+cashPro
+
+    print(today,total,netProfit,percentageProfit,netCash)
+
     driver.close()
     driver.quit()
+
+    # store data
+    # Array = [today,total,netProfit,pecentageProfit]
+
+    # with open('data.csv', mode='w') as data:
+    #     data = csv.writer(data, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #     data.writerow()
+
+
+    # df = pandas.read_csv('data.csv')
+    # print(df)
+    
+    #PLOT
+    #plot pie chart of assets
+    #percentage profit over time
+    #total over time
+
 
 if __name__ == "__main__":
     main()
