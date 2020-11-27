@@ -101,6 +101,7 @@ def main():
 
     # while True: keep updating
     #TRADING212
+
     try:
         login212(driver, url212, username, password)
         time.sleep(20)
