@@ -1,2 +1,4 @@
+*.csv
 secrets.py
 *.png
+data.csv

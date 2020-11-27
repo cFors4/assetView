@@ -1,5 +1,6 @@
 import time
 from datetime import date
+from datetime import datetime
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -7,7 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from secrets import *
 
 import csv
-import pandas
+import pandas as pd
 
 def load_driver():
     chrome_options = Options()
@@ -56,7 +57,7 @@ def getdata212(driver):
     
     return total,int(netProfit),float(pecentageProfit),cash
             
-def getdataPro(driver,url):
+def getdataPro(driver,url,urlPro9):
     print("coinbase pro protfolio")
 
     driver.get(url)
@@ -86,6 +87,8 @@ def getdataPro(driver,url):
     
 def main():
     today = date.today()
+    t = time.localtime()
+    now = time.strftime("%H:%M:%S", t)
     url212 = "https://live.trading212.com/beta"
     # urlPro = "https://pro.coinbase.com/"
     #make secret
@@ -98,42 +101,45 @@ def main():
 
     # while True: keep updating
     #TRADING212
-    login212(driver, url212, username, password)
-    time.sleep(20)
-    total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
+    try:
+        login212(driver, url212, username, password)
+        time.sleep(20)
+        total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
+    except:
+        print("no internet")
 
     #BITCOIN
-    totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro)
+    totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
 
     #ETORO??
-    #nationwide??
+    #nationwide?? debt
+    totalLiabilites = -3000
 
     print(total212,totalPro)
-    total = total212+totalPro
+    totalAssets = total212+totalPro
     netProfit = netProfit212+netProfitPro
-    pieSlice212 = total212/total
-    pieSlicePro = totalPro/total
-    percentageProfit = netProfit/total
+    pieSlice212 = total212/totalAssets
+    pieSlicePro = totalPro/totalAssets
+    percentageProfit = netProfit/totalAssets
     netCash = cash212+cashPro
-
-    print(today,total,netProfit,percentageProfit,netCash)
 
     driver.close()
     driver.quit()
 
-    # store data
-    # Array = [today,total,netProfit,pecentageProfit]
+    # store data - ratios cash to assets to liabilites?
+    store = [now,today,totalAssets,netProfit,percentageProfit,netCash,totalLiabilites]
 
-    # with open('data.csv', mode='w') as data:
-    #     data = csv.writer(data, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #     data.writerow()
+    # with open('data.csv', mode='a',newline='') as data:
+    #     writer = csv.writer(data)
+    #     writer.writerow(store)
 
-
-    # df = pandas.read_csv('data.csv')
-    # print(df)
+    df = pd.read_csv('data.csv')
+    df.loc[len(df)] =store
+    print(df)
+    df.to_csv('data.csv',index = False)
     
     #PLOT
-    #plot pie chart of assets
+    #plot pie chart of assets+sub(profit)/liabilities+sub(availableliabilites)/cash
     #percentage profit over time
     #total over time
 
