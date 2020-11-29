@@ -9,13 +9,10 @@ from secrets import *
 
 import csv
 import pandas as pd
-<<<<<<< HEAD
 import matplotlib.pyplot as plt
 
 import PyPDF2 
 
-=======
->>>>>>> 04dd55e7cc5ced76d33b4a24c7c8249055d04353
 
 def load_driver():
     chrome_options = Options()
