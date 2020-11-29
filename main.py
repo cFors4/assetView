@@ -104,21 +104,17 @@ def main():
     password = password212
     driver = load_driver()
     
-
+    #Collection of data
     #TRADING212
-  
     login212(driver, url212, username, password)
     time.sleep(20)
     total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
-
-
     #BITCOIN
     totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
-
     #ETORO??
     #nationwide?? debt
 
-    #CALCULATIONS
+    #CALCULATIONS on data
     print(total212,totalPro)
     totalAssets = round(total212+totalPro,2)
     netProfit = round(netProfit212+netProfitPro,2)
@@ -130,7 +126,7 @@ def main():
     driver.quit()
 
 
-    
+    #store and plot data
     # invested/profit/cash over time
     titleUp = 'Total Invested into Assets: '+str(totalAssetsInvested)+' Profit: '+str(netProfit)+' Cash: '+str(netCash)
     assets = [now,today,totalAssetsInvested,netProfit,netCash]
