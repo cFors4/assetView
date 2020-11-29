@@ -9,10 +9,13 @@ from secrets import *
 
 import csv
 import pandas as pd
+<<<<<<< HEAD
 import matplotlib.pyplot as plt
 
 import PyPDF2 
 
+=======
+>>>>>>> 04dd55e7cc5ced76d33b4a24c7c8249055d04353
 
 def load_driver():
     chrome_options = Options()
@@ -232,7 +235,6 @@ def main():
     pdf3File.close()
 
     #current pie chart of assets+sub(profit)/liabilities+sub(availableliabilites)/cash
-
     #plt.show()
 
     #data science - what stack leads to most increase correlation gradient to ratio to find optimal ratio for increase (affected by adding cash and how frequencly you but once adding cash)
