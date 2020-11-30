@@ -128,7 +128,7 @@ def main():
 
     #store and plot data
     # invested/profit/cash over time
-    titleUp = 'Total Invested into Assets: '+str(totalAssetsInvested)+' Profit: '+str(netProfit)+' Cash: '+str(netCash)
+    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: '+str(totalAssetsInvested)+' Profit: '+str(netProfit)+' Cash: '+str(netCash)
     assets = [now,today,totalAssetsInvested,netProfit,netCash]
     df = pd.read_csv('assets.csv')
     df.loc[len(df)] = assets
@@ -231,7 +231,10 @@ def main():
     pdf2File.close()
     pdf3File.close()
 
+    #data analysis - collect more data - find out best and worst move probabilistically - research - jamie
     #current pie chart of assets+sub(profit)/liabilities+sub(availableliabilites)/cash
+    #have annotations on pie chart based on data analysis
+
     #plt.show()
 
     #data science - what stack leads to most increase correlation gradient to ratio to find optimal ratio for increase (affected by adding cash and how frequencly you but once adding cash)
