@@ -200,15 +200,13 @@ def main():
 
     dfNet.to_csv('net.csv',index = False)
     dfNet.plot(figsize=(10,15))
-    axNet = dfNet.plot.line(x = 'date',title='Net Money', rot=90, fontsize='10', grid=True,sharex=False,linewidth=5)#.legend(loc='center left',bbox_to_anchor=(1.0, 0.5)) #.tight_layout()
+    axNet = dfNet.plot(x = 'date',title='Net Money', rot=90, fontsize='10', grid=True,sharex=False,linewidth=5)#.legend(loc='center left',bbox_to_anchor=(1.0, 0.5)) #.tight_layout()
     axNet.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     axNet.set_ylabel("Net £")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
-    z = np.polyfit(dateInsert, Net, 1)
-    p = np.poly1d(z)
-    plt.plot(dateInsert,p(dateInsert),"r--")
+    #add trendline
 
-    #save graphs
+    #save graphs#
     fig = ax.get_figure()
     fig.savefig('assets.pdf', bbox_inches = "tight")
     fig2 = ax2.get_figure()
