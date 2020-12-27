@@ -10,15 +10,11 @@ from secrets import *
 import csv
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 import PyPDF2 
 
 def load_driver():
     chrome_options = Options()
-
-    #chrome_options.add_argument("--headless")
-    #chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--disable-web-security")
     chrome_options.add_argument("--allow-running-insecure-content")
@@ -30,7 +26,6 @@ def load_driver():
 def login212(driver, url, username, password):
     driver.get(url)
     time.sleep(5)
-
     login_field = driver.find_element_by_xpath("//*[@id='username-real']")
     password_field = driver.find_element_by_xpath("//*[@id='pass-real']")
     try:
@@ -91,6 +86,18 @@ def getdataPro(driver,url,urlPro9):
 
     return BTC_price*BTC,gain,netPercentage,cash
 
+def getdataToro(driver,url,password):
+    print("Etoro protfolio")
+    driver.get(url)
+    time.sleep(5)
+    username_field = driver.find_element_by_xpath('//*[@id="username"]')
+    username_field.send_keys('connorsforsyth@gmail.com')
+    password_field = driver.find_element_by_xpath('//*[@id="password"]')
+    password_field.send_keys(password)
+    sign_in = driver.find_element_by_xpath('/html/body/ui-layout/div/div/div[1]/login/login-sts/div/div/div/form/div/div[5]/button')
+    sign_in.click()
+    
+    
     
 def main():
     today = date.today()
@@ -99,6 +106,7 @@ def main():
     url212 = "https://live.trading212.com/beta"
     plt.close('all')
     urlGooglePro = urlPro
+    urlEtoro = "https://www.etoro.com/login"
     
     username = "connorsforsyth@gmail.com"
     password = password212
@@ -111,19 +119,24 @@ def main():
     total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
     #BITCOIN
     totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
-    #ETORO??
+    #ETORO?? protected
+    # totalToro,netProfitToro,cashToro = getdataToro(driver,urlEtoro,password)
+    totalEtoro = 213
+    netprofitEtoro = 63
     #nationwide?? debt
 
     #CALCULATIONS on data
     print(total212,totalPro)
-    totalAssets = round(total212+totalPro,3)
-    netProfit = round(netProfit212+netProfitPro,3)
+    totalAssets = round(total212+totalPro+totalEtoro,3)
+    netProfit = round(netProfit212+netProfitPro+netprofitEtoro,3)
     totalAssetsInvested = round(totalAssets-netProfit,3)
     percentageProfit = round(netProfit/totalAssets,5)
     netCash = round(cash212+cashPro,3)
-    totalLiabilites = -3000
+    totalLiabilites = -1800
     driver.close()
     driver.quit()
+
+    ##if percentage profit or profit negative - default to zero and subtract from total
 
 
     #store and plot data
@@ -131,9 +144,12 @@ def main():
     assets = [now,today,totalAssetsInvested,netProfit,netCash,0]
     df = pd.read_csv('assets.csv')
     df.loc[len(df)] = assets
+    column = df["netProfit"]
+    max_value = column.max()
+    print(max_value)
     netCashMean = round(df["netCash"].mean(),3) #wave collapse function
     df['netCashMean'] = netCashMean
-    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: '+str(totalAssetsInvested)+' Profit: '+str(netProfit)+' Cash: '+str(netCash) +'\n Flow of cash: '+str(netCashMean)
+    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: '+str(totalAssetsInvested)+' Profit: '+str(netProfit)+' Cash: '+str(netCash) +'\n Flow of cash: '+str(netCashMean)+'\n Alltimehigh-Profit: '+str(max_value)
 
         #manipulation 
     df.reset_index(inplace=True)
@@ -142,14 +158,14 @@ def main():
     print(df)
     df.to_csv('assets.csv',index = False)
     df.plot(figsize=(10,15))
-    ax = df.plot.area(x = 'date',title=titleUp, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0,colormap='gist_rainbow',stacked=False)#.legend(loc='center left',bbox_to_anchor=(1.0, 0.5)) #.tight_layout()
+    ax = df.plot.area(x = 'date',title=titleUp, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0,colormap='gist_rainbow',stacked=False)
     ax.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax.set_ylabel("SUM = total GBP assets = " +str(totalAssets))
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
+    
    
     #liabilities over time
-    
     liabilities = [now,today,totalLiabilites,0]
     df2 = pd.read_csv('liabilities.csv')
     df2.loc[len(df2)] = liabilities
@@ -164,7 +180,7 @@ def main():
     print(df2)
     df2.to_csv('liabilities.csv',index = False)
     df2.plot(figsize=(10,15))
-    ax2 = df2.plot.area( x = 'date',title=titleDown, rot=90, fontsize='10' , grid=True,sharex=False,colormap='winter',stacked=False)#.legend(loc='center left',bbox_to_anchor=(1.0, 0.5)) #.tight_layout()
+    ax2 = df2.plot.area( x = 'date',title=titleDown, rot=90, fontsize='10' , grid=True,sharex=False,colormap='winter',stacked=False)
     ax2.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax2.set_ylabel("SUM = total GBP liabilites +0%+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
@@ -173,9 +189,12 @@ def main():
     percentage = [now,today,percentageProfit,0]
     df3 = pd.read_csv('percentage.csv')
     df3.loc[len(df3)] = percentage
+    column = df3["percentageProfit"]
+    max_value = column.max()
+    print(max_value)
     percentageProfitMean = round(df3["percentageProfit"].mean(),3) #wave collapse function
     df3['percentageProfitMean'] = percentageProfitMean
-    titlePerc = 'Percentage Profit: '+str(percentageProfit)+' percentageProfitMean: '+ str(percentageProfitMean)
+    titlePerc = 'Percentage Profit: '+str(percentageProfit)+' percentageProfitMean: '+ str(percentageProfitMean)+'\n Alltimehigh: '+ str(max_value)
 
         #manipulation 
     df3.reset_index(inplace=True)
@@ -184,27 +203,44 @@ def main():
     print(df3)
     df3.to_csv('percentage.csv',index = False)
     df3.plot(figsize=(10,15))
-    ax3 = df3.plot.area(x = 'date',title=titlePerc, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0, colormap='gist_rainbow',stacked=False)#.legend(loc='center left',bbox_to_anchor=(1.0, 0.5)) #.tight_layout()
+    ax3 = df3.plot.area(x = 'date',title=titlePerc, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0, colormap='gist_rainbow',stacked=False)
     ax3.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax3.set_ylabel("SUM = total percentage profit +NO LOSS+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
     ###### NET GRAPH
+    netCurrent = round((totalAssetsInvested +netProfit + netCash) +totalLiabilites,3)
     Net = (df["totalAssetsInvested"]+df["netCash"]+df["netProfit"]) + df2["totalLiabilites"]
     dateInsert = df["date"]
     dateInsert = dateInsert.iloc[:-1]
     dfNet = pd.DataFrame(index=dateInsert)
     dfNet.reset_index(inplace=True)
-    print(Net)
     dfNet.insert(loc=1, column='Net', value=Net)
+    dfNet.drop(dfNet.tail(1).index,inplace=True)
+    dfNet.loc[len(dfNet)] = [today,netCurrent]
 
     dfNet.to_csv('net.csv',index = False)
+    #add annotation to all time high - todo
+        ##projections
+    p = totalAssetsInvested
+    pmt = netCashMean #calculate contributions per month (not right)
+    r = percentageProfitMean #calculate return % per year YoY (not right)
+    n = 12 #amount of months per year
+    t = 10 #amount of years
+    column = dfNet["Net"]
+    max_value = column.max()
+    print(max_value)
+    projection = round(((p*(1+(r/n))) + (pmt*(((1+(r/n))**(n*t)-1)/(r/n))))-liabilitiesMean,3)
+    print(projection)
+    goalEarningperMonth = 1000
+    nestEgg = (goalEarningperMonth*12)*25
+    titleNet = 'NET: '+str(netCurrent)+'\n Projection at current rate (10 years): '+str(projection)+'\n 4% rule to earn '+str(goalEarningperMonth)+' a month: '+str(nestEgg)+'\n Alltimehigh: '+ str(max_value)
+    
     dfNet.plot(figsize=(10,15))
-    axNet = dfNet.plot(x = 'date',title='Net Money', rot=90, fontsize='10', grid=True,sharex=False,linewidth=5)#.legend(loc='center left',bbox_to_anchor=(1.0, 0.5)) #.tight_layout()
+    axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5)
     axNet.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     axNet.set_ylabel("Net £")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
-    #add trendline
 
     #save graphs#
     fig = ax.get_figure()
