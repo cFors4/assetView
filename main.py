@@ -118,8 +118,9 @@ def loginFI(driver, url, username, password):
     password_field.send_keys(password)
     time.sleep(2)
     continue_button2.click()
-    time.sleep(4)
+    time.sleep(5)
     blockFI = driver.find_element_by_xpath('//*[@id="main"]/div/div[2]/div/div/div[1]/div/div[2]/div[1]/div[1]/label[2]/label')
+                                            
     blockFI = blockFI.text
     blockFI = blockFI.replace(',','')
     blockFI = float(blockFI.replace('$',''))
@@ -251,7 +252,7 @@ def main():
     
     percentageProfitMean = round(df3["percentageProfit"].mean(),3) #wave collapse function
     df3['percentageProfitMean'] = percentageProfitMean
-    titlePerc = 'Percentage Profit: %'+str(percentageProfit*100)+' percentageProfitMean: %'+ str(percentageProfitMean*100)+'\n Alltimehigh: %'+ str(max_value*100)
+    titlePerc = 'Percentage Profit: %'+str(round(percentageProfit*100,3))+' percentageProfitMean: %'+ str(round(percentageProfitMean*100,3))+'\n Alltimehigh: %'+ str(max_value*100)
 
         #manipulation 
     df3.reset_index(inplace=True)
@@ -376,7 +377,7 @@ def main():
     pdf3File.close()
     pdf4File.close()
     pdf5File.close()
-    #data analysis - collect more data - find out best and worst move probabilistically - research - jamie
+    #data analysis - collect more data - find out best and worst move probabilistically - research
     #have annotations on pie chart based on data analysis
     #data science - what stack leads to most increase correlation gradient to ratio to find optimal ratio for increase (affected by adding cash and how frequencly you but once adding cash)
 
