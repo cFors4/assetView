@@ -126,7 +126,7 @@ def loginFI(driver, url, username, password):
     blockFI = float(blockFI.replace('$',''))
     
 
-    costBasis = 990 #1.1 @ £900
+    costBasis = 990 + 0 #1.1 @ £900 + any additions to blockfi 
     poundBlockFI = c.convert(blockFI, 'USD', 'GBP')
     gain = poundBlockFI - costBasis
     netPercentage = gain/costBasis
@@ -166,8 +166,8 @@ def main():
     #ETORO - protected
     # totalToro,netProfitToro,cashToro = getdataToro(driver,urlEtoro,password)
     print("Etoro protfolio")
-    totalEtoro = 232
-    netprofitEtoro = 78
+    totalEtoro = 236
+    netprofitEtoro = 82
     print(totalEtoro,netprofitEtoro)
 
     #BITCOIN - figure out way to automate cost basis
@@ -185,7 +185,7 @@ def main():
     netCash = round(cash212+cashPro,3)
 
     print("debt")
-    totalLiabilites = -2000
+    totalLiabilites = -1600
     print(totalLiabilites)
 
     ##if percentage profit or profit negative - default to zero and subtract from total
@@ -209,7 +209,7 @@ def main():
 
     netCashMean = round(df["netCash"].mean(),3) #wave collapse function
     df['netCashMean'] = netCashMean
-    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Flow of cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase this month: £'+ str(round(increase_month,3)) +'\n Profit percentage increase this month: % '+ str(round(increase_month_percentage,3))
+    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Mean cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase this month: £'+ str(round(increase_month,3)) +'\n Profit percentage increase this month: % '+ str(round(increase_month_percentage,3))
 
         #manipulation 
     df.reset_index(inplace=True)
@@ -252,7 +252,7 @@ def main():
     
     percentageProfitMean = round(df3["percentageProfit"].mean(),3) #wave collapse function
     df3['percentageProfitMean'] = percentageProfitMean
-    titlePerc = 'Percentage Profit: %'+str(round(percentageProfit*100,3))+' percentageProfitMean: %'+ str(round(percentageProfitMean*100,3))+'\n Alltimehigh: %'+ str(max_value*100)
+    titlePerc = 'Percentage Profit: %'+str(round(percentageProfit*100,3))+' percentageProfitMean: %'+ str(round(percentageProfitMean*100,3))+'\n Alltimehigh: %'+ str(round(max_value*100,3))
 
         #manipulation 
     df3.reset_index(inplace=True)
@@ -290,11 +290,11 @@ def main():
     
     projection = round(((p*(1+(r/n))) + (pmt*(((1+(r/n))**(n*t)-1)/(r/n))))-liabilitiesMean,3)
     
-    goalEarningperMonth = 1000
+    goalEarningperMonth = 1500
     nestEgg = (goalEarningperMonth*12)*25
     increase_month            = netCurrent - dfNet['Net'].iloc[-30]
     increase_month_percentage = (increase_month/dfNet['Net'].iloc[-30])*100
-    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg)+'\n Alltimehigh: £'+ str(max_value) +'\n  Increase this month: £'+ str(round(increase_month,3)) +'\n percentage increase this month: % '+ str(round(increase_month_percentage,3))
+    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(max_value) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this month: £'+ str(round(increase_month,3)) +'\n percentage increase this month: % '+ str(round(increase_month_percentage,3))
     
     dfNet.plot(figsize=(10,15))
     axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, color = 'lightgreen')
@@ -303,11 +303,11 @@ def main():
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
     # Pie chart
-    labels = ['StocksInvested -total 60%', 'StocksProfit' ,'CryptoInvested -total 20%','CryptoProfit', 'Debt 10%','Cash 10%']
+    labels = ['StocksInvested -total 70%', 'StocksProfit' ,'CryptoInvested -total 10%','CryptoProfit', 'Debt 5%','Cash 15%']
     sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), netProfit212, ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash]
     dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
     
-    axPie = dfPie.plot.pie(y='Assets/liabilites', figsize=(10,15), autopct = "%.2f%%", colors = ['blue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
+    axPie = dfPie.plot.pie(y='Assets/liabilites', figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
 
     #save graphs#
     fig = ax.get_figure()
