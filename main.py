@@ -10,14 +10,13 @@ from secrets import *
 import csv
 import pandas as pd
 import matplotlib.pyplot as plt
+from currency_converter import CurrencyConverter
+c = CurrencyConverter()
 
 import PyPDF2 
 
 def load_driver():
     chrome_options = Options()
-
-    #chrome_options.add_argument("--headless")
-    #chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--disable-web-security")
     chrome_options.add_argument("--allow-running-insecure-content")
@@ -29,7 +28,6 @@ def load_driver():
 def login212(driver, url, username, password):
     driver.get(url)
     time.sleep(5)
-
     login_field = driver.find_element_by_xpath("//*[@id='username-real']")
     password_field = driver.find_element_by_xpath("//*[@id='pass-real']")
     try:
@@ -47,7 +45,6 @@ def login212(driver, url, username, password):
     login_button.click()
 
 def getdata212(driver):
-    print("trading 212 protfolio")
 
     total = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/div/div/label/label[2]")
     total = int(total.text.replace(',',''))
@@ -66,8 +63,6 @@ def getdata212(driver):
     return total,int(netProfit),float(pecentageProfit),cash
             
 def getdataPro(driver,url,urlPro9):
-    print("coinbase pro protfolio")
-
     driver.get(url)
     time.sleep(5)                              
     fetch_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
@@ -83,112 +78,248 @@ def getdataPro(driver,url,urlPro9):
     cash_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
     cash = float(cash_field)
 
-    avgPrice = 7700
-    costBasis = avgPrice*BTC
+    # avgPrice = 7700
+    # costBasis = avgPrice*BTC
+    # sold out initial investment so cost basis is now current contributions since 19/01/2021
+    costBasis = 30 + 0 + 0
     gain = (BTC_price*BTC)-costBasis
     netPercentage = gain/costBasis
 
     return BTC_price*BTC,gain,netPercentage,cash
 
+def getdataToro(driver,url,password):
+    print("Etoro protfolio")
+    driver.get(url)
+    time.sleep(5)
+    username_field = driver.find_element_by_xpath('//*[@id="username"]')
+    username_field.send_keys('connorsforsyth@gmail.com')
+    password_field = driver.find_element_by_xpath('//*[@id="password"]')
+    password_field.send_keys(password)
+    sign_in = driver.find_element_by_xpath('/html/body/ui-layout/div/div/div[1]/login/login-sts/div/div/div/form/div/div[5]/button')
+    sign_in.click()
+    
+def loginFI(driver, url, username, password):
+    driver.get(url)
+    time.sleep(7)
+    login_field = driver.find_element_by_xpath('//*[@id="main"]/div/div/div/div/div/div[1]/div/div/input')
+    continue_button = driver.find_element_by_xpath('//*[@id="main"]/div/div/div/div/div/div[2]/button') #input value changed from 6 to 8
+    login_field.send_keys(username)
+    time.sleep(2)
+    continue_button.click()
+    time.sleep(4)
+    try:
+        password_field = driver.find_element_by_xpath('//*[@id="main"]/div/div/div/div/div/div[2]/div/div/input')
+    except:
+        password_field = driver.find_element_by_xpath('//*[@id="password"]')
+    try:
+        continue_button2 = driver.find_element_by_xpath('//*[@id="main"]/div/div/div/div/div/div[4]/button')
+    except:
+        continue_button2 = driver.find_element_by_xpath('/html/body/main/section/div/div/div/form/div[2]/button')
+    password_field.send_keys(password)
+    time.sleep(2)
+    continue_button2.click()
+    time.sleep(5)
+    blockFI = driver.find_element_by_xpath('//*[@id="main"]/div/div[2]/div/div/div[1]/div/div[2]/div[1]/div[1]/label[2]/label')
+                                            
+    blockFI = blockFI.text
+    blockFI = blockFI.replace(',','')
+    blockFI = float(blockFI.replace('$',''))
+    
+
+    costBasis = 990 + 0 #1.1 @ £900 + any additions to blockfi 
+    poundBlockFI = c.convert(blockFI, 'USD', 'GBP')
+    gain = poundBlockFI - costBasis
+    netPercentage = gain/costBasis
+
+    return poundBlockFI,gain
+    
     
 def main():
     today = date.today()
     t = time.localtime()
     now = time.strftime("%H:%M:%S", t)
-    url212 = "https://live.trading212.com/beta"
+    url212 = "https://trading212.com/it/login"
     plt.close('all')
     urlGooglePro = urlPro
+    urlFI = "https://app.blockfi.com/signin"
     
-    username = "connorsforsyth@gmail.com"
     password = password212
+    passwordFI = password + '!'
     driver = load_driver()
-    
-    #Collection of data
+
+    #BLOCKFI
+    print("block fi portfolio")
+    totalFI,netProfitFI = loginFI(driver, urlFI, username, passwordFI)
+    print(totalFI,netProfitFI)
+
     #TRADING212
+    print("trading 212 protfolio")
     login212(driver, url212, username, password)
     time.sleep(20)
     total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
-    #BITCOIN
-    totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
-    #ETORO??
-    #nationwide?? debt
+    print(total212,netProfit212,cash212)
+    # total212 = float(11110.60)
+    # netProfit212 = float(2295.57)
+    # totalwithcash = float(12226.56)
+    # cash212 = float(totalwithcash - total212)
 
-    #CALCULATIONS on data
-    print(total212,totalPro)
-    totalAssets = round(total212+totalPro,2)
-    netProfit = round(netProfit212+netProfitPro,2)
-    totalAssetsInvested = round(totalAssets-netProfit,2)
-    percentageProfit = round(netProfit/totalAssets,5)
-    netCash = round(cash212+cashPro,2)
-    totalLiabilites = -2400
+    #ETORO - protected
+    # totalToro,netProfitToro,cashToro = getdataToro(driver,urlEtoro,password)
+    print("Etoro protfolio")
+    totalEtoro = 236
+    netprofitEtoro = 82
+    print(totalEtoro,netprofitEtoro)
+
+    #BITCOIN - figure out way to automate cost basis
+    print("coinbase pro protfolio")
+    totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
+    print(totalPro,netProfitPro,cashPro)
+
     driver.close()
     driver.quit()
+    #CALCULATIONS on data
+    totalAssets = round(total212+totalPro+totalEtoro+totalFI,3)
+    netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI,3)
+    totalAssetsInvested = round(totalAssets-netProfit,3)
+    percentageProfit = round(netProfit/totalAssetsInvested,5)
+    netCash = round(cash212+cashPro,3)
 
+    print("debt")
+    totalLiabilites = -1600
+    print(totalLiabilites)
+
+    ##if percentage profit or profit negative - default to zero and subtract from total
+    if (netProfit<0):
+        print("uh oh stinky")
+        totalLiabilites = totalLiabilites + netProfit
+        netProfit = 0
+        percentageProfit = 0
 
     #store and plot data
     # invested/profit/cash over time
-    titleUp = 'Total Invested into Assets: '+str(totalAssetsInvested)+' Profit: '+str(netProfit)+' Cash: '+str(netCash)
-    assets = [now,today,totalAssetsInvested,netProfit,netCash]
+    assets = [now,today,totalAssetsInvested,netProfit,netCash,0]
     df = pd.read_csv('assets.csv')
     df.loc[len(df)] = assets
-    # df.to_csv('assets.csv',index = False)
+    column = df["netProfit"]
+    max_value = column.max()
+
+    increase_month            = netProfit - df['netProfit'].iloc[-30]
+    increase_month_percentage = (increase_month/df['netProfit'].iloc[-30])*100
+    
+
+    netCashMean = round(df["netCash"].mean(),3) #wave collapse function
+    df['netCashMean'] = netCashMean
+    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Mean cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase this month: £'+ str(round(increase_month,3)) +'\n Profit percentage increase this month: % '+ str(round(increase_month_percentage,3))
 
         #manipulation 
     df.reset_index(inplace=True)
     df = df.sort_values('index').groupby('date').tail(1)
     df = df.drop(['index'], axis=1)
-    print(df)
+   
     df.to_csv('assets.csv',index = False)
     df.plot(figsize=(10,15))
-    ax = df.plot.area(x = 'date',title=titleUp, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0,colormap='gist_rainbow') #.tight_layout()
-    ax.set_xlabel("Sum = Amount of days since 2020-11-27")
-    ax.set_ylabel("SUM = total GBP assets")
+    ax = df.plot.area(x = 'date',title=titleUp, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0,colormap='gist_rainbow',stacked=False)
+    ax.set_xlabel("Sum = Amount of days measured since 2019-02-21")
+    ax.set_ylabel("SUM = total GBP assets = " +str(totalAssets))
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-   
     #liabilities over time
-    titleDown = 'Liabilities: '+str(totalLiabilites)+''
-    liabilities = [now,today,totalLiabilites]
+    liabilities = [now,today,totalLiabilites,0]
     df2 = pd.read_csv('liabilities.csv')
     df2.loc[len(df2)] = liabilities
-    # df2.to_csv('liabilities.csv',index = False)
+    liabilitiesMean = round(df2["totalLiabilites"].mean(),3) #wave collapse function
+    df2['liabilitiesMean'] = liabilitiesMean
+    titleDown = 'Liabilities: '+str(totalLiabilites)+' liabilities Mean: '+str(liabilitiesMean)
 
         #manipulation 
     df2.reset_index(inplace=True)
     df2 = df2.sort_values('index').groupby('date').tail(1)
     df2 = df2.drop(['index'], axis=1)
-    print(df2)
+   
     df2.to_csv('liabilities.csv',index = False)
     df2.plot(figsize=(10,15))
-    #ax = ax
-    ax2 = df2.plot.area( x = 'date',title=titleDown, rot=90, fontsize='10' , grid=True,sharex=False,colormap='winter') #.tight_layout()
-    ax2.set_xlabel("Sum = Amount of days since 2020-11-27")
+    ax2 = df2.plot.area( x = 'date',title=titleDown, rot=90, fontsize='10' , grid=True,sharex=False,colormap='winter',stacked=False)
+    ax2.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax2.set_ylabel("SUM = total GBP liabilites +0%+")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
     #percentageProfit
-    titlePerc = 'Percentage Profit: '+str(percentageProfit)+''
-    percentage = [now,today,percentageProfit]
+    percentage = [now,today,percentageProfit,0]
     df3 = pd.read_csv('percentage.csv')
     df3.loc[len(df3)] = percentage
-    # df3.to_csv('percentage.csv',index = False)
+    column = df3["percentageProfit"]
+    max_value = column.max()
+    
+    percentageProfitMean = round(df3["percentageProfit"].mean(),3) #wave collapse function
+    df3['percentageProfitMean'] = percentageProfitMean
+    titlePerc = 'Percentage Profit: %'+str(round(percentageProfit*100,3))+' percentageProfitMean: %'+ str(round(percentageProfitMean*100,3))+'\n Alltimehigh: %'+ str(round(max_value*100,3))
 
         #manipulation 
     df3.reset_index(inplace=True)
     df3 = df3.sort_values('index').groupby('date').tail(1)
     df3 = df3.drop(['index'], axis=1)
-    print(df3)
+    
     df3.to_csv('percentage.csv',index = False)
     df3.plot(figsize=(10,15))
-    ax3 = df3.plot.area(x = 'date',title=titlePerc, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0, colormap='gist_rainbow') #.tight_layout()
-    ax3.set_xlabel("Sum = Amount of days since 2020-11-27")
+    ax3 = df3.plot.area(x = 'date',title=titlePerc, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0, colormap='gist_rainbow',stacked=False)
+    ax3.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax3.set_ylabel("SUM = total percentage profit +NO LOSS+")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    #save graphs
+    ###### NET GRAPH
+    netCurrent = round((totalAssetsInvested +netProfit + netCash) +totalLiabilites,3)
+    Net = (df["totalAssetsInvested"]+df["netCash"]+df["netProfit"]) + df2["totalLiabilites"]
+    dateInsert = df["date"]
+    dateInsert = dateInsert.iloc[:-1]
+    dfNet = pd.DataFrame(index=dateInsert)
+    dfNet.reset_index(inplace=True)
+    dfNet.insert(loc=1, column='Net', value=Net)
+    dfNet.drop(dfNet.tail(1).index,inplace=True)
+    dfNet.loc[len(dfNet)] = [today,netCurrent]
+
+    dfNet.to_csv('net.csv',index = False)
+    #add annotation to all time high - todo
+        ##projections
+    p = totalAssetsInvested
+    pmt = netCashMean #calculate contributions per month (not right)
+    r = percentageProfitMean #calculate return % per year YoY (not right)
+    n = 12 #amount of months per year
+    t = 10 #amount of years
+    column = dfNet["Net"]
+    max_value = column.max()
+    
+    projection = round(((p*(1+(r/n))) + (pmt*(((1+(r/n))**(n*t)-1)/(r/n))))-liabilitiesMean,3)
+    
+    goalEarningperMonth = 1500
+    nestEgg = (goalEarningperMonth*12)*25
+    increase_month            = netCurrent - dfNet['Net'].iloc[-30]
+    increase_month_percentage = (increase_month/dfNet['Net'].iloc[-30])*100
+    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(max_value) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this month: £'+ str(round(increase_month,3)) +'\n percentage increase this month: % '+ str(round(increase_month_percentage,3))
+    
+    dfNet.plot(figsize=(10,15))
+    axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, color = 'lightgreen')
+    axNet.set_xlabel("Sum = Amount of days measured since 2019-02-21")
+    axNet.set_ylabel("Net £")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
+    # Pie chart
+    labels = ['StocksInvested -total 70%', 'StocksProfit' ,'CryptoInvested -total 10%','CryptoProfit', 'Debt 5%','Cash 15%']
+    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), netProfit212, ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash]
+    dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
+    
+    axPie = dfPie.plot.pie(y='Assets/liabilites', figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
+
+    #save graphs#
     fig = ax.get_figure()
     fig.savefig('assets.pdf', bbox_inches = "tight")
     fig2 = ax2.get_figure()
     fig2.savefig('liabilities.pdf', bbox_inches = "tight")
     fig3 = ax3.get_figure()
     fig3.savefig('percentage.pdf', bbox_inches = "tight")
+    fig4 = axNet.get_figure()
+    fig4.savefig('net.pdf', bbox_inches = "tight")
+    fig5 = axPie.get_figure()
+    fig5.savefig('pie.pdf', bbox_inches = "tight")
 
     ##MERGE PDF'S INTO ONE MAIN.PDF 
  
@@ -196,11 +327,15 @@ def main():
     pdf1File = open('assets.pdf', 'rb')
     pdf2File = open('liabilities.pdf', 'rb')
     pdf3File = open('percentage.pdf', 'rb')
+    pdf4File = open('net.pdf', 'rb')
+    pdf5File = open('pie.pdf', 'rb')
     
     # Read the files that you have opened
     pdf1Reader = PyPDF2.PdfFileReader(pdf1File)
     pdf2Reader = PyPDF2.PdfFileReader(pdf2File)
     pdf3Reader = PyPDF2.PdfFileReader(pdf3File)
+    pdf4Reader = PyPDF2.PdfFileReader(pdf4File)
+    pdf5Reader = PyPDF2.PdfFileReader(pdf5File)
     
     # Create a new PdfFileWriter object which represents a blank PDF document
     pdfWriter = PyPDF2.PdfFileWriter()
@@ -219,6 +354,17 @@ def main():
     for pageNum in range(pdf3Reader.numPages):
         pageObj = pdf3Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
+
+    # Loop through all the pagenumbers for the first document
+    for pageNum in range(pdf4Reader.numPages):
+        pageObj = pdf4Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+
+    # Loop through all the pagenumbers for the first document
+    for pageNum in range(pdf5Reader.numPages):
+        pageObj = pdf5Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+        
     
     # Now that you have copied all the pages in both the documents, write them into the a new document
     pdfOutputFile = open('main.pdf', 'wb')
@@ -229,10 +375,11 @@ def main():
     pdf1File.close()
     pdf2File.close()
     pdf3File.close()
-
-    #current pie chart of assets+sub(profit)/liabilities+sub(availableliabilites)/cash
-    #plt.show()
-
+    pdf4File.close()
+    pdf5File.close()
+    #data analysis - collect more data - find out best and worst move probabilistically - research
+    #have annotations on pie chart based on data analysis
     #data science - what stack leads to most increase correlation gradient to ratio to find optimal ratio for increase (affected by adding cash and how frequencly you but once adding cash)
+
 if __name__ == "__main__":
     main()
