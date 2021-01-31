@@ -133,6 +133,33 @@ def loginFI(driver, url, username, password):
 
     return poundBlockFI,gain
     
+def loginNation(driver, url, username, password):
+    driver.get(url)
+    time.sleep(7)
+    close_button = driver.find_element_by_xpath('/html/body/div[4]/md-dialog/md-dialog-actions/button')
+    switch_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[2]/div/div[2]/a')
+    time.sleep(1)
+    close_button.click()
+    time.sleep(1)
+    switch_button.click()
+    login_field = driver.find_element_by_xpath('//*[@id="input_0"]')
+    password_field = driver.find_element_by_xpath('//*[@id="input_1"]')
+    time.sleep(2)
+    continue_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[1]/div/form/div/div[1]/div[2]/button/span')
+    login_field.send_keys(username)
+    time.sleep(2)
+    password_field.send_keys(password)
+    time.sleep(3)
+    continue_button.click()
+    time.sleep(5)
+    balance = driver.find_element_by_xpath('//*[@id="sideBar"]/div[1]/div[1]/div[1]')
+    debt = balance.text
+    refresh_button = driver.find_element_by_xpath('//*[@id="sideBar"]/div[2]/div/div[3]/div/div[2]/div[1]/div[2]/div/img')
+    refresh_button.click()
+    debt = debt.replace(',','')
+    debt = float(debt.replace('£',''))
+
+    return debt
     
 def main():
     today = date.today()
@@ -142,15 +169,25 @@ def main():
     plt.close('all')
     urlGooglePro = urlPro
     urlFI = "https://app.blockfi.com/signin"
+    urlNation = "https://my.moneydashboard.com/dashboard"
     
     password = password212
     passwordFI = password + '!'
     driver = load_driver()
+    #Nationwide
+    print("debt collection")
+    liabilites = loginNation(driver, urlNation, username, password)
+    print(liabilites)
+    # liabilites = -1600
+
 
     #BLOCKFI
     print("block fi portfolio")
     totalFI,netProfitFI = loginFI(driver, urlFI, username, passwordFI)
     print(totalFI,netProfitFI)
+    # totalFI     = 1000
+    # netProfitFI = 10
+    
 
     #TRADING212
     print("trading 212 protfolio")
@@ -174,9 +211,13 @@ def main():
     print("coinbase pro protfolio")
     totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
     print(totalPro,netProfitPro,cashPro)
+    # totalPro = 2530
+    # netProfitPro = 2500
+    # cashPro = 0
 
     driver.close()
     driver.quit()
+    ##################
     #CALCULATIONS on data
     totalAssets = round(total212+totalPro+totalEtoro+totalFI,3)
     netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI,3)
@@ -185,7 +226,7 @@ def main():
     netCash = round(cash212+cashPro,3)
 
     print("debt")
-    totalLiabilites = -1600
+    totalLiabilites = 0 + liabilites
     print(totalLiabilites)
 
     ##if percentage profit or profit negative - default to zero and subtract from total
@@ -209,7 +250,8 @@ def main():
 
     netCashMean = round(df["netCash"].mean(),3) #wave collapse function
     df['netCashMean'] = netCashMean
-    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Mean cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase this month: £'+ str(round(increase_month,3)) +'\n Profit percentage increase this month: % '+ str(round(increase_month_percentage,3))
+    increase_month_profit = round(increase_month,3)
+    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Mean cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase this month: £'+ str(increase_month_profit) +'\n Profit percentage increase this month: % '+ str(round(increase_month_percentage,3))
 
         #manipulation 
     df.reset_index(inplace=True)
@@ -266,6 +308,18 @@ def main():
     ax3.set_ylabel("SUM = total percentage profit +NO LOSS+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
+    ####stacked bar chart
+    stacked = df[['date','totalAssetsInvested', 'netProfit', 'netCash']].copy()
+    stacked = stacked.join(df2["totalLiabilites"])
+    stacked['date'] = pd.to_datetime(stacked['date'])
+    stacked = stacked.groupby(pd.Grouper(key='date', freq='1M')).mean()
+    stacked.index = stacked.index.strftime('%B, %Y')
+    stacked = stacked.dropna()
+    ax4 = stacked.plot(kind = 'bar', stacked=True, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0)
+    ax4.set_xlabel("Sum = Amount of months measured since 2019-02-21")
+    ax4.set_ylabel("SUM = Monthly averages")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
     ###### NET GRAPH
     netCurrent = round((totalAssetsInvested +netProfit + netCash) +totalLiabilites,3)
     Net = (df["totalAssetsInvested"]+df["netCash"]+df["netProfit"]) + df2["totalLiabilites"]
@@ -294,7 +348,10 @@ def main():
     nestEgg = (goalEarningperMonth*12)*25
     increase_month            = netCurrent - dfNet['Net'].iloc[-30]
     increase_month_percentage = (increase_month/dfNet['Net'].iloc[-30])*100
-    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(max_value) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this month: £'+ str(round(increase_month,3)) +'\n percentage increase this month: % '+ str(round(increase_month_percentage,3))
+    increase_month_net = round(increase_month,3)
+    increase_month_contribution = increase_month_net - increase_month_profit
+    hourly_salary = round(netProfit/2080,3) #make over a year 
+    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(round(max_value,3)) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this month: £'+ str(increase_month_net) +'\n percentage increase this month: % '+ str(round(increase_month_percentage,3)) + '\nContributions this month: £' + str(round(increase_month_contribution,3)) + '\nHourly salary over a year(make a year): £' + str(hourly_salary)
     
     dfNet.plot(figsize=(10,15))
     axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, color = 'lightgreen')
@@ -320,6 +377,8 @@ def main():
     fig4.savefig('net.pdf', bbox_inches = "tight")
     fig5 = axPie.get_figure()
     fig5.savefig('pie.pdf', bbox_inches = "tight")
+    fig6 = ax4.get_figure()
+    fig6.savefig('monthly.pdf', bbox_inches = "tight")
 
     ##MERGE PDF'S INTO ONE MAIN.PDF 
  
@@ -329,6 +388,7 @@ def main():
     pdf3File = open('percentage.pdf', 'rb')
     pdf4File = open('net.pdf', 'rb')
     pdf5File = open('pie.pdf', 'rb')
+    pdf6File = open('monthly.pdf', 'rb')
     
     # Read the files that you have opened
     pdf1Reader = PyPDF2.PdfFileReader(pdf1File)
@@ -336,6 +396,7 @@ def main():
     pdf3Reader = PyPDF2.PdfFileReader(pdf3File)
     pdf4Reader = PyPDF2.PdfFileReader(pdf4File)
     pdf5Reader = PyPDF2.PdfFileReader(pdf5File)
+    pdf6Reader = PyPDF2.PdfFileReader(pdf6File)
     
     # Create a new PdfFileWriter object which represents a blank PDF document
     pdfWriter = PyPDF2.PdfFileWriter()
@@ -353,6 +414,11 @@ def main():
     # Loop through all the pagenumbers for the first document
     for pageNum in range(pdf3Reader.numPages):
         pageObj = pdf3Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+        
+    # Loop through all the pagenumbers for the first document
+    for pageNum in range(pdf6Reader.numPages):
+        pageObj = pdf6Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
 
     # Loop through all the pagenumbers for the first document
