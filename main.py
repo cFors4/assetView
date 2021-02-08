@@ -81,7 +81,7 @@ def getdataPro(driver,url,urlPro9):
     # avgPrice = 7700
     # costBasis = avgPrice*BTC
     # sold out initial investment so cost basis is now current contributions since 19/01/2021
-    costBasis = 30 + 0 + 0
+    costBasis = 30 + 45 + 0
     gain = (BTC_price*BTC)-costBasis
     netPercentage = gain/costBasis
 
@@ -126,7 +126,7 @@ def loginFI(driver, url, username, password):
     blockFI = float(blockFI.replace('$',''))
     
 
-    costBasis = 990 + 0 #1.1 @ £900 + any additions to blockfi 
+    costBasis = 990 + 300 + 0 #1.1 @ £900 + any additions to blockfi 
     poundBlockFI = c.convert(blockFI, 'USD', 'GBP')
     gain = poundBlockFI - costBasis
     netPercentage = gain/costBasis
@@ -180,7 +180,6 @@ def main():
     print(liabilites)
     # liabilites = -1600
 
-
     #BLOCKFI
     print("block fi portfolio")
     totalFI,netProfitFI = loginFI(driver, urlFI, username, passwordFI)
@@ -188,7 +187,6 @@ def main():
     # totalFI     = 1000
     # netProfitFI = 10
     
-
     #TRADING212
     print("trading 212 protfolio")
     login212(driver, url212, username, password)
@@ -228,7 +226,8 @@ def main():
     print("debt")
     totalLiabilites = 0 + liabilites
     print(totalLiabilites)
-
+    # plt.style.use('dark_background')
+    # plt.style.use('fivethirtyeight') 
     ##if percentage profit or profit negative - default to zero and subtract from total
     if (netProfit<0):
         print("uh oh stinky")
@@ -237,7 +236,7 @@ def main():
         percentageProfit = 0
 
     #store and plot data
-    # invested/profit/cash over time
+    # #################invested/profit/cash over time
     assets = [now,today,totalAssetsInvested,netProfit,netCash,0]
     df = pd.read_csv('assets.csv')
     df.loc[len(df)] = assets
@@ -251,7 +250,7 @@ def main():
     netCashMean = round(df["netCash"].mean(),3) #wave collapse function
     df['netCashMean'] = netCashMean
     increase_month_profit = round(increase_month,3)
-    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Mean cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase this month: £'+ str(increase_month_profit) +'\n Profit percentage increase this month: % '+ str(round(increase_month_percentage,3))
+    titleUp = 'Last Updated: '+str(now)+'\nTotal Invested into Assets: £'+str(totalAssetsInvested)+' Profit: £'+str(netProfit)+' Cash: £'+str(netCash) +'\n Mean cash: £'+str(netCashMean)+'\n Alltimehigh-Profit: £'+str(round(max_value,3)) +'\n  Profit increase last 30 days: £'+ str(increase_month_profit) +'\n Profit percentage increase last 30 days: % '+ str(round(increase_month_percentage,3))
 
         #manipulation 
     df.reset_index(inplace=True)
@@ -265,7 +264,7 @@ def main():
     ax.set_ylabel("SUM = total GBP assets = " +str(totalAssets))
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    #liabilities over time
+    ##############liabilities over time
     liabilities = [now,today,totalLiabilites,0]
     df2 = pd.read_csv('liabilities.csv')
     df2.loc[len(df2)] = liabilities
@@ -285,16 +284,19 @@ def main():
     ax2.set_ylabel("SUM = total GBP liabilites +0%+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    #percentageProfit
+    ###############percentageProfit
     percentage = [now,today,percentageProfit,0]
     df3 = pd.read_csv('percentage.csv')
     df3.loc[len(df3)] = percentage
     column = df3["percentageProfit"]
     max_value = column.max()
-    
+
+    percentageProfit = percentageProfit*100
+    profitChangeOnePoint          = round(percentageProfit - ((df3['percentageProfit'].iloc[-2])*100),3)
+    profitChangeTwoPoints         = round(percentageProfit - ((df3['percentageProfit'].iloc[-4])*100),3)
     percentageProfitMean = round(df3["percentageProfit"].mean(),3) #wave collapse function
     df3['percentageProfitMean'] = percentageProfitMean
-    titlePerc = 'Percentage Profit: %'+str(round(percentageProfit*100,3))+' percentageProfitMean: %'+ str(round(percentageProfitMean*100,3))+'\n Alltimehigh: %'+ str(round(max_value*100,3))
+    titlePerc = 'Percentage Profit: %'+str(round(percentageProfit,3))+' percentageProfitMean: %'+ str(round(percentageProfitMean*100,3))+'\n Alltimehigh: %'+ str(round(max_value*100,3)) + '\n Percentage Profit change from last data point: %' +str(profitChangeOnePoint) + '\n Percentage Profit change from two data points: %' +str(profitChangeTwoPoints)
 
         #manipulation 
     df3.reset_index(inplace=True)
@@ -308,19 +310,32 @@ def main():
     ax3.set_ylabel("SUM = total percentage profit +NO LOSS+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    ####stacked bar chart
+    ##############stacked bar chart monthly averages
     stacked = df[['date','totalAssetsInvested', 'netProfit', 'netCash']].copy()
     stacked = stacked.join(df2["totalLiabilites"])
     stacked['date'] = pd.to_datetime(stacked['date'])
     stacked = stacked.groupby(pd.Grouper(key='date', freq='1M')).mean()
     stacked.index = stacked.index.strftime('%B, %Y')
     stacked = stacked.dropna()
-    ax4 = stacked.plot(kind = 'bar', stacked=True, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0)
-    ax4.set_xlabel("Sum = Amount of months measured since 2019-02-21")
-    ax4.set_ylabel("SUM = Monthly averages")
-    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    ###### NET GRAPH
+    liabilitesSafeLimit = -3000
+    cashNeeded = round((totalAssetsInvested/2)-(totalLiabilites-liabilitesSafeLimit)-netCash,3)
+    titleStacked = 'diversification = less volatility which != less risk \n Buying power needed for crash(-50%):  '+str(totalAssetsInvested*0.5) +'\nCASH TO GET AND SIT: '+str(cashNeeded)
+    ax4 = stacked.plot(kind = 'bar',title=titleStacked, stacked=True, rot=90, fontsize='10', grid=True,sharex=False,linewidth=0)
+    ax4.set_xlabel("Sum = Amount of months measured since 2019-02-21")
+    ax4.set_ylabel("SUM = Monthly average NET")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+    
+    for p in ax4.patches:
+        width, height = p.get_width(), p.get_height()
+        x, y = p.get_xy() 
+        ax4.text(x+width/2, 
+                y+height/2, 
+                '{:.0f}'.format(height), 
+                horizontalalignment='center', 
+                verticalalignment='center')
+
+    ################### NET GRAPH
     netCurrent = round((totalAssetsInvested +netProfit + netCash) +totalLiabilites,3)
     Net = (df["totalAssetsInvested"]+df["netCash"]+df["netProfit"]) + df2["totalLiabilites"]
     dateInsert = df["date"]
@@ -351,7 +366,7 @@ def main():
     increase_month_net = round(increase_month,3)
     increase_month_contribution = increase_month_net - increase_month_profit
     hourly_salary = round(netProfit/2080,3) #make over a year 
-    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(round(max_value,3)) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this month: £'+ str(increase_month_net) +'\n percentage increase this month: % '+ str(round(increase_month_percentage,3)) + '\nContributions this month: £' + str(round(increase_month_contribution,3)) + '\nHourly salary over a year(make a year): £' + str(hourly_salary)
+    titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(round(max_value,3)) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this last 30 days: £'+ str(increase_month_net) +'\n percentage increase last 30 days: % '+ str(round(increase_month_percentage,3)) + '\nContributions last 30 days: £' + str(round(increase_month_contribution,3)) + '\nHourly salary over a year(make a year): £' + str(hourly_salary)
     
     dfNet.plot(figsize=(10,15))
     axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, color = 'lightgreen')
@@ -359,12 +374,13 @@ def main():
     axNet.set_ylabel("Net £")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    # Pie chart
+    ################# Pie chart
+    titlePie = 'GOAL AMOUNTS \nStocks:Crypto 77:22 (3.5): '+str(round((total212 + totalEtoro)/(totalPro + totalFI),3)) + '\nAmount in Main:' + str(total212*0.77) + '\nAmount in ARK:' + str(total212*0.15) + '\nAmount in ARKG:' + str(total212*0.075) + '\nAmount in ARK(rest):' + str(total212*0.0188) + '\nAmount in experiments:' + str(total212*0.03)
     labels = ['StocksInvested -total 70%', 'StocksProfit' ,'CryptoInvested -total 10%','CryptoProfit', 'Debt 5%','Cash 15%']
-    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), netProfit212, ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash]
+    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), (netProfit212+netprofitEtoro), ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash]
     dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
     
-    axPie = dfPie.plot.pie(y='Assets/liabilites', figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
+    axPie = dfPie.plot.pie(y='Assets/liabilites', title = titlePie,figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
 
     #save graphs#
     fig = ax.get_figure()
