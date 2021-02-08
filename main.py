@@ -283,7 +283,7 @@ def main():
     ax2.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax2.set_ylabel("SUM = total GBP liabilites +0%+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
-
+    
     ###############percentageProfit
     percentage = [now,today,percentageProfit,0]
     df3 = pd.read_csv('percentage.csv')
@@ -309,6 +309,30 @@ def main():
     ax3.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     ax3.set_ylabel("SUM = total percentage profit +NO LOSS+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
+    ##############volatility
+    volatil = [now,today,profitChangeTwoPoints,0]
+    df4 = pd.read_csv('volatility.csv')
+    df4.loc[len(df4)] = volatil
+    column = df4["volatility"]
+    max_value_volatility = column.max()
+    min_value_volatility = column.min()
+    volatilityMean = round(df4["volatility"].mean(),3) #wave collapse function
+    df4['volatilityMean'] = volatilityMean
+    titleVol = 'Volatility of percentage profit mean: ' +str(volatilityMean) + '\nVolatility of percentage profit max' + str(max_value_volatility)+ '\nnVolatility of percentage profit min' + str(min_value_volatility)
+
+        #mainpulation
+    df4.reset_index(inplace=True)
+    df4 = df4.sort_values('index').groupby('date').tail(1)
+    df4 = df4.drop(['index'], axis=1)
+
+    df4.to_csv('volatility.csv',index = False)
+    df4.plot(figsize=(10,15))
+    axVol = df4.plot(x = 'date',title=titleVol, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, colormap='gist_rainbow',stacked=False)
+    axVol.set_xlabel("Sum = Amount of days measured since 2021-02-08")
+    axVol.set_ylabel("Change of Percentage profit per day - Volatility")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
 
     ##############stacked bar chart monthly averages
     stacked = df[['date','totalAssetsInvested', 'netProfit', 'netCash']].copy()
@@ -375,8 +399,8 @@ def main():
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
     ################# Pie chart
-    titlePie = 'GOAL AMOUNTS \nStocks:Crypto 77:22 (3.5): '+str(round((total212 + totalEtoro)/(totalPro + totalFI),3)) + '\nAmount in Main:' + str(total212*0.77) + '\nAmount in ARK:' + str(total212*0.15) + '\nAmount in ARKG:' + str(total212*0.075) + '\nAmount in ARK(rest):' + str(total212*0.0188) + '\nAmount in experiments:' + str(total212*0.03)
-    labels = ['StocksInvested -total 70%', 'StocksProfit' ,'CryptoInvested -total 10%','CryptoProfit', 'Debt 5%','Cash 15%']
+    titlePie = 'GOAL AMOUNTS \nStocks:Crypto 77:22 (3.5): '+str(round((total212 + totalEtoro)/(totalPro + totalFI),3)) + '\nAmount in Main:' + str(total212*0.77) + '\nAmount in ARK:' + str(total212*0.15) + '\nAmount in ARKG:' + str(total212*0.075) + '\nAmount in ARK(rest):' + str(total212*0.0188) + '\nAmount in experiments:' + str(round(total212*0.03,3))
+    labels = ['StocksInvested (70%)', 'StocksProfit' ,'CryptoInvested (20)%','CryptoProfit', 'Debt (0%)','Cash (10%)']
     sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), (netProfit212+netprofitEtoro), ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash]
     dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
     
@@ -395,6 +419,8 @@ def main():
     fig5.savefig('pie.pdf', bbox_inches = "tight")
     fig6 = ax4.get_figure()
     fig6.savefig('monthly.pdf', bbox_inches = "tight")
+    fig7 = axVol.get_figure()
+    fig7.savefig('volatility.pdf', bbox_inches = "tight")
 
     ##MERGE PDF'S INTO ONE MAIN.PDF 
  
@@ -405,6 +431,8 @@ def main():
     pdf4File = open('net.pdf', 'rb')
     pdf5File = open('pie.pdf', 'rb')
     pdf6File = open('monthly.pdf', 'rb')
+    pdf7File = open('volatility.pdf', 'rb')
+    
     
     # Read the files that you have opened
     pdf1Reader = PyPDF2.PdfFileReader(pdf1File)
@@ -413,7 +441,9 @@ def main():
     pdf4Reader = PyPDF2.PdfFileReader(pdf4File)
     pdf5Reader = PyPDF2.PdfFileReader(pdf5File)
     pdf6Reader = PyPDF2.PdfFileReader(pdf6File)
+    pdf7Reader = PyPDF2.PdfFileReader(pdf7File)
     
+    ############ ORDER PDFS
     # Create a new PdfFileWriter object which represents a blank PDF document
     pdfWriter = PyPDF2.PdfFileWriter()
     
@@ -430,6 +460,11 @@ def main():
     # Loop through all the pagenumbers for the first document
     for pageNum in range(pdf3Reader.numPages):
         pageObj = pdf3Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+
+    # Loop through all the pagenumbers for the first document
+    for pageNum in range(pdf7Reader.numPages):
+        pageObj = pdf7Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
         
     # Loop through all the pagenumbers for the first document
