@@ -269,7 +269,7 @@ def main():
     df2.loc[len(df2)] = liabilities
     liabilitiesMean = round(df2["totalLiabilites"].mean(),3) #wave collapse function
     df2['liabilitiesMean'] = liabilitiesMean
-    titleDown = 'Liabilities: '+str(totalLiabilites)+' liabilities Mean: '+str(liabilitiesMean)
+    titleDown = 'Liabilities: £'+str(totalLiabilites)+' liabilities Mean: £'+str(liabilitiesMean)
 
         #manipulation 
     df2.reset_index(inplace=True)
