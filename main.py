@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 
 from secrets import *
 
-import csv
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from currency_converter import CurrencyConverter
@@ -81,11 +81,10 @@ def getdataPro(driver,url,urlPro9):
     # avgPrice = 7700
     # costBasis = avgPrice*BTC
     # sold out initial investment so cost basis is now current contributions since 19/01/2021
-    costBasis = 30 + 45 + 0
+    costBasis = 0 + 0 + 0
     gain = (BTC_price*BTC)-costBasis
-    netPercentage = gain/costBasis
 
-    return BTC_price*BTC,gain,netPercentage,cash
+    return BTC_price*BTC,gain,cash
 
 def getdataToro(driver,url,password):
     print("Etoro protfolio")
@@ -129,7 +128,7 @@ def loginFI(driver, url, username, password):
     costBasis = 990 + 300 + 0 #1.1 @ £900 + any additions to blockfi 
     poundBlockFI = c.convert(blockFI, 'USD', 'GBP')
     gain = poundBlockFI - costBasis
-    netPercentage = gain/costBasis
+    netPercentage = gain/costBasis 
 
     return poundBlockFI,gain
     
@@ -207,7 +206,7 @@ def main():
 
     #BITCOIN - figure out way to automate cost basis
     print("coinbase pro protfolio")
-    totalPro,netProfitPro,pecentageProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
+    totalPro,netProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
     print(totalPro,netProfitPro,cashPro)
     # totalPro = 2530
     # netProfitPro = 2500
@@ -287,6 +286,8 @@ def main():
     ###############percentageProfit
     percentage = [now,today,percentageProfit,0]
     df3 = pd.read_csv('percentage.csv')
+    if df3['date'].iloc[-1] == today:
+        df3 = df3[:-1]
     df3.loc[len(df3)] = percentage
     column = df3["percentageProfit"]
     max_value = column.max()
@@ -310,16 +311,25 @@ def main():
     ax3.set_ylabel("SUM = total percentage profit +NO LOSS+")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
-    ##############volatility
-    volatil = [now,today,profitChangeTwoPoints,0]
-    df4 = pd.read_csv('volatility.csv')
+    ##############volatility daily
+    #from percentage profit
+    df4 = df3[['time', 'date', 'percentageProfit']].copy()
+    df4['volatility'] = -1* (df4['percentageProfit'] - df4['percentageProfit'].shift(-1))
+    df4 = df4.drop(['percentageProfit'], axis=1)
+
+    vol = profitChangeTwoPoints/100
+    volatil = [now,today,vol]
+    if df4['date'].iloc[-1] == today:
+        df4 = df4[:-1]
+
     df4.loc[len(df4)] = volatil
+    #calculate mean
+    volatilityMean = round(df4["volatility"].mean(),3) #wave collapse function
+    df4['volatilityMean'] = volatilityMean
     column = df4["volatility"]
     max_value_volatility = column.max()
     min_value_volatility = column.min()
-    volatilityMean = round(df4["volatility"].mean(),3) #wave collapse function
-    df4['volatilityMean'] = volatilityMean
-    titleVol = 'Volatility of percentage profit mean: ' +str(volatilityMean) + '\nVolatility of percentage profit max' + str(max_value_volatility)+ '\nnVolatility of percentage profit min' + str(min_value_volatility)
+    titleVol = 'Change of percentage profit mean: %' +str(round(volatilityMean*100,3)) + '\n Percentage profit change max: %' + str(round(max_value_volatility*100,3))+ '\nPercentage profit change min: %' + str(round(min_value_volatility*100,3))
 
         #mainpulation
     df4.reset_index(inplace=True)
@@ -328,11 +338,65 @@ def main():
 
     df4.to_csv('volatility.csv',index = False)
     df4.plot(figsize=(10,15))
-    axVol = df4.plot(x = 'date',title=titleVol, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, colormap='gist_rainbow',stacked=False)
-    axVol.set_xlabel("Sum = Amount of days measured since 2021-02-08")
+    axVol = df4.plot(x = 'date',title=titleVol, rot=90, fontsize='10', grid=True,sharex=False,linewidth=2,stacked=False)
+    axVol.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     axVol.set_ylabel("Change of Percentage profit per day - Volatility")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
+    ##############volatility monthly
+    ##profit percentage in months format
+    volMon = df3[['date','percentageProfit']].copy()
+    volMon['date'] = pd.to_datetime(volMon['date'])
+    volMon = volMon.groupby(pd.Grouper(key='date', freq='1M')).mean()
+    volMon.index = volMon.index.strftime('%B, %Y')
+    volMon = volMon.dropna()
+    
+    #profit percentage difference between months
+    volMon['volatility'] = -1* (volMon['percentageProfit'] - volMon['percentageProfit'].shift(-1))
+    changeSoFar = ((percentageProfit/100) - volMon['percentageProfit'].iloc[-2])
+    volMon = volMon.replace(np.nan,changeSoFar)
+    volMon = volMon.drop(['percentageProfit'], axis=1)
+    column = volMon['volatility']
+    max_value_volatility = column.max()
+    min_value_volatility = column.min()
+    #mean
+    volatilityMean = round(volMon["volatility"].mean(),3) #wave collapse function
+    volMon['volatilityMean'] = volatilityMean
+    #graph
+    volMon.reset_index(inplace=True)
+    print(volMon)
+    # volMon = volMon.drop(['index'], axis=1)
+
+    titleVolMon = 'Change of percentage profit mean: %' +str(round(volatilityMean*100,3)) + '\n Percentage profit change max: %' + str(round(max_value_volatility*100,3))+ '\nPercentage profit change min: %' + str(round(min_value_volatility*100,3))
+    volMon.plot(figsize=(10,15))
+    axVolMon = volMon.plot(x = 'date',title=titleVolMon, rot=90, fontsize='10', grid=True,sharex=False,linewidth=2,stacked=False)
+    axVolMon.set_xlabel("Sum = Amount of months measured since 2019-02-21")
+    axVolMon.set_ylabel("Change of Percentage profit per Month - Volatility")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
+    ##############bar percentage monthly
+    percMon = df3[['date','percentageProfit']].copy()
+    percMon['date'] = pd.to_datetime(percMon['date'])
+    percMon = percMon.groupby(pd.Grouper(key='date', freq='1M')).mean()
+    percMon.index = percMon.index.strftime('%B, %Y')
+    percMon['percentageProfit'] = percMon['percentageProfit'].apply(lambda x: x*100)
+    percMon = percMon.dropna()
+    percMon.reset_index(inplace=True)
+    #manipulation
+    percMon.plot(figsize=(10,15))
+    axPercMon = percMon.plot(kind = 'bar',x = 'date', rot=90, fontsize='10', grid=True,sharex=False,linewidth=0,stacked=False)
+    axPercMon.set_xlabel("Sum = Amount of months measured since 2019-02-21")
+    axPercMon.set_ylabel("Change of Percentage profit per Month")
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
+    for p in axPercMon.patches:
+        width, height = p.get_width(), p.get_height()
+        x, y = p.get_xy() 
+        axPercMon.text(x+width/2, 
+                y+height/2, 
+                '{:.0f}%'.format(height), 
+                horizontalalignment='center', 
+                verticalalignment='center')
 
     ##############stacked bar chart monthly averages
     stacked = df[['date','totalAssetsInvested', 'netProfit', 'netCash']].copy()
@@ -421,6 +485,10 @@ def main():
     fig6.savefig('monthly.pdf', bbox_inches = "tight")
     fig7 = axVol.get_figure()
     fig7.savefig('volatility.pdf', bbox_inches = "tight")
+    fig8 = axVolMon.get_figure()
+    fig8.savefig('volatilityMonth.pdf', bbox_inches = "tight")
+    fig9 = axPercMon.get_figure()
+    fig9.savefig('percentageMonth.pdf', bbox_inches = "tight")
 
     ##MERGE PDF'S INTO ONE MAIN.PDF 
  
@@ -432,7 +500,9 @@ def main():
     pdf5File = open('pie.pdf', 'rb')
     pdf6File = open('monthly.pdf', 'rb')
     pdf7File = open('volatility.pdf', 'rb')
-    
+    pdf8File = open('volatilityMonth.pdf', 'rb')
+    pdf9File = open('percentageMonth.pdf', 'rb')
+
     
     # Read the files that you have opened
     pdf1Reader = PyPDF2.PdfFileReader(pdf1File)
@@ -442,6 +512,8 @@ def main():
     pdf5Reader = PyPDF2.PdfFileReader(pdf5File)
     pdf6Reader = PyPDF2.PdfFileReader(pdf6File)
     pdf7Reader = PyPDF2.PdfFileReader(pdf7File)
+    pdf8Reader = PyPDF2.PdfFileReader(pdf8File)
+    pdf9Reader = PyPDF2.PdfFileReader(pdf9File)
     
     ############ ORDER PDFS
     # Create a new PdfFileWriter object which represents a blank PDF document
@@ -462,9 +534,19 @@ def main():
         pageObj = pdf3Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
 
-    # Loop through all the pagenumbers for the first document
+    # Loop through all the pagenumbers for the first document- daily volatility
     for pageNum in range(pdf7Reader.numPages):
         pageObj = pdf7Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+    
+    # Loop through all the pagenumbers for the first document - monthly volatility
+    for pageNum in range(pdf8Reader.numPages):
+        pageObj = pdf8Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+    
+    # Loop through all the pagenumbers for the first document - monthly percentage
+    for pageNum in range(pdf9Reader.numPages):
+        pageObj = pdf9Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
         
     # Loop through all the pagenumbers for the first document
@@ -494,6 +576,10 @@ def main():
     pdf3File.close()
     pdf4File.close()
     pdf5File.close()
+    pdf6File.close()
+    pdf7File.close()
+    pdf8File.close()
+    pdf9File.close()
     #data analysis - collect more data - find out best and worst move probabilistically - research
     #have annotations on pie chart based on data analysis
     #data science - what stack leads to most increase correlation gradient to ratio to find optimal ratio for increase (affected by adding cash and how frequencly you but once adding cash)
