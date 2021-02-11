@@ -45,6 +45,13 @@ def login212(driver, url, username, password):
     login_button.click()
 
 def getdata212(driver):
+    #invest                               //*[@id="app"]/div[1]/div[1]/div/div[2]/div[3]/div/div[3]/svg
+    panel = driver.find_element_by_xpath('//*[@id="app"]/div[1]/div[1]/div/div[2]/div[3]/div/div[1]')
+    panel.click()
+    time.sleep(1)
+    invest = driver.find_element_by_xpath("//*[@id='app']/div[11]/div/div/div/div/div/div/div[1]/div[2]")
+    invest.click()
+    time.sleep(4)
 
     total = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/div/div/label/label[2]")
     total = int(total.text.replace(',',''))
@@ -59,10 +66,23 @@ def getdata212(driver):
     cash = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[1]/div/div[2]/div[1]/div/span[2]")
     cash = cash.text
     cash = int(cash[1:len(cash)-3].replace(',',''))-int(total)
+
+    #isa
+    panel = driver.find_element_by_xpath('//*[@id="app"]/div[1]/div[1]/div/div[2]/div[3]/div/div[1]')
+    panel.click()
+    time.sleep(1)
+    isa = driver.find_element_by_xpath("//*[@id='app']/div[11]/div/div/div/div/div/div/div[1]/div[3]/div[2]")
+    isaTotal = isa.text
+    print(isaTotal)
+    isaTotal = isaTotal[1:len(isaTotal)]
+    print(isaTotal)
+    isaTotal = float(isaTotal.replace(',',''))
+    print(isaTotal)
+    time.sleep(1)
     
-    return total,int(netProfit),float(pecentageProfit),cash
+    return total,int(netProfit),float(pecentageProfit),cash,isaTotal
             
-def getdataPro(driver,url,urlPro9):
+def getdataPro(driver,url,urlPro9,urlETH):
     driver.get(url)
     time.sleep(5)                              
     fetch_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
@@ -77,14 +97,27 @@ def getdataPro(driver,url,urlPro9):
     time.sleep(5)                              
     cash_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
     cash = float(cash_field)
+    #add calculation for eth ?
+    driver.get(urlETH)
+    time.sleep(5)                              
+    fetch_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
+    ETH = float(fetch_field)
+    ethereum_api_url = 'https://www.google.com/search?sxsrf=ALeKk03PI9iwf6OyZNj5eQMi3qKda-ylnw%3A1613067481254&ei=2XQlYOeOD9XyxgPFl4DICA&q=ethereum+price&oq=ethereum+price&gs_lcp=CgZwc3ktYWIQAzIJCCMQJxBGEIICMgsIABCxAxCDARCRAjIICAAQsQMQgwEyCAgAELEDEIMBMggIABCxAxCDATIICAAQsQMQgwEyCAgAELEDEIMBMggIABCxAxCDATICCAAyCAgAELEDEIMBOgcIIxCwAxAnOgcIABCwAxBDOgQIIxAnOgcIABCHAhAUUIwYWOYbYLAdaAFwAngAgAHgAYgB0AOSAQUzLjAuMZgBAKABAaoBB2d3cy13aXrIAQrAAQE&sclient=psy-ab&ved=0ahUKEwin39_RuOLuAhVVuXEKHcULAIkQ4dUDCA0&uact=5'
+    driver.get(ethereum_api_url)
+    time.sleep(5)  
+    ETH_field = driver.find_element_by_xpath('//*[@id="knowledge-currency__updatable-data-column"]/div[1]/div[2]/span[1]').text
+    ETH_price = float(ETH_field.replace(',',''))
 
     # avgPrice = 7700
     # costBasis = avgPrice*BTC
     # sold out initial investment so cost basis is now current contributions since 19/01/2021
-    costBasis = 0 + 0 + 0
-    gain = (BTC_price*BTC)-costBasis
-
-    return BTC_price*BTC,gain,cash
+    costBasisBTC = 0 + 0 + 0
+    costBasisETH = 0 + 250 + 164
+    gainBTC = (BTC_price*BTC)-costBasisBTC
+    gainETH = (ETH_price*ETH)-costBasisETH
+    total = (BTC_price*BTC)+(ETH_price*ETH)
+    totalgain = gainBTC+gainETH
+    return total,totalgain,cash
 
 def getdataToro(driver,url,password):
     print("Etoro protfolio")
@@ -125,7 +158,7 @@ def loginFI(driver, url, username, password):
     blockFI = float(blockFI.replace('$',''))
     
 
-    costBasis = 990 + 300 + 0 #1.1 @ £900 + any additions to blockfi 
+    costBasis = 990 + 0 + 0 #1.1 @ £900 + any additions to blockfi 
     poundBlockFI = c.convert(blockFI, 'USD', 'GBP')
     gain = poundBlockFI - costBasis
     netPercentage = gain/costBasis 
@@ -190,8 +223,10 @@ def main():
     print("trading 212 protfolio")
     login212(driver, url212, username, password)
     time.sleep(20)
-    total212,netProfit212,pecentageProfit212,cash212 = getdata212(driver)
+    total212,netProfit212,pecentageProfit212,cash212,metals = getdata212(driver)
     print(total212,netProfit212,cash212)
+    print("metals")
+    print(metals)
     # total212 = float(11110.60)
     # netProfit212 = float(2295.57)
     # totalwithcash = float(12226.56)
@@ -200,13 +235,13 @@ def main():
     #ETORO - protected
     # totalToro,netProfitToro,cashToro = getdataToro(driver,urlEtoro,password)
     print("Etoro protfolio")
-    totalEtoro = 236
-    netprofitEtoro = 82
+    totalEtoro = 257
+    netprofitEtoro = 103
     print(totalEtoro,netprofitEtoro)
 
     #BITCOIN - figure out way to automate cost basis
     print("coinbase pro protfolio")
-    totalPro,netProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9)
+    totalPro,netProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9,urlETH)
     print(totalPro,netProfitPro,cashPro)
     # totalPro = 2530
     # netProfitPro = 2500
@@ -216,7 +251,7 @@ def main():
     driver.quit()
     ##################
     #CALCULATIONS on data
-    totalAssets = round(total212+totalPro+totalEtoro+totalFI,3)
+    totalAssets = round(total212+totalPro+totalEtoro+totalFI+metals,3)
     netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI,3)
     totalAssetsInvested = round(totalAssets-netProfit,3)
     percentageProfit = round(netProfit/totalAssetsInvested,5)
@@ -464,8 +499,8 @@ def main():
 
     ################# Pie chart
     titlePie = 'GOAL AMOUNTS \nStocks:Crypto 77:22 (3.5): '+str(round((total212 + totalEtoro)/(totalPro + totalFI),3)) + '\nAmount in Main:' + str(total212*0.77) + '\nAmount in ARK:' + str(total212*0.15) + '\nAmount in ARKG:' + str(total212*0.075) + '\nAmount in ARK(rest):' + str(total212*0.0188) + '\nAmount in experiments:' + str(round(total212*0.03,3))
-    labels = ['StocksInvested (70%)', 'StocksProfit' ,'CryptoInvested (20)%','CryptoProfit', 'Debt (0%)','Cash (10%)']
-    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), (netProfit212+netprofitEtoro), ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash]
+    labels = ['StocksInvested (70%)', 'StocksProfit' ,'CryptoInvested (20)%','CryptoProfit', 'Debt (0%)','Cash (10%)','Metals']
+    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), (netProfit212+netprofitEtoro), ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash, metals]
     dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
     
     axPie = dfPie.plot.pie(y='Assets/liabilites', title = titlePie,figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
