@@ -51,7 +51,7 @@ def getdata212(driver):
     time.sleep(1)
     invest = driver.find_element_by_xpath("//*[@id='app']/div[11]/div/div/div/div/div/div/div[1]/div[2]")
     invest.click()
-    time.sleep(4)
+    time.sleep(10)
 
     total = driver.find_element_by_xpath("//*[@id='app']/div[1]/div[2]/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/div/div/label/label[2]")
     total = int(total.text.replace(',',''))
@@ -67,17 +67,14 @@ def getdata212(driver):
     cash = cash.text
     cash = int(cash[1:len(cash)-3].replace(',',''))-int(total)
 
-    #isa
+    #isa - metals
     panel = driver.find_element_by_xpath('//*[@id="app"]/div[1]/div[1]/div/div[2]/div[3]/div/div[1]')
     panel.click()
     time.sleep(1)
     isa = driver.find_element_by_xpath("//*[@id='app']/div[11]/div/div/div/div/div/div/div[1]/div[3]/div[2]")
     isaTotal = isa.text
-    print(isaTotal)
     isaTotal = isaTotal[1:len(isaTotal)]
-    print(isaTotal)
     isaTotal = float(isaTotal.replace(',',''))
-    print(isaTotal)
     time.sleep(1)
     
     return total,int(netProfit),float(pecentageProfit),cash,isaTotal
@@ -112,7 +109,7 @@ def getdataPro(driver,url,urlPro9,urlETH):
     # costBasis = avgPrice*BTC
     # sold out initial investment so cost basis is now current contributions since 19/01/2021
     costBasisBTC = 0 + 0 + 0
-    costBasisETH = 0 + 250 + 164
+    costBasisETH = 0 + 0 + 0
     gainBTC = (BTC_price*BTC)-costBasisBTC
     gainETH = (ETH_price*ETH)-costBasisETH
     total = (BTC_price*BTC)+(ETH_price*ETH)
@@ -167,17 +164,19 @@ def loginFI(driver, url, username, password):
     
 def loginNation(driver, url, username, password):
     driver.get(url)
-    time.sleep(7)
+    time.sleep(10)
     close_button = driver.find_element_by_xpath('/html/body/div[4]/md-dialog/md-dialog-actions/button')
-    switch_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[2]/div/div[2]/a')
-    time.sleep(1)
+    time.sleep(1) 
     close_button.click()
     time.sleep(1)
+    switch_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[2]/div/div[2]/a')
+    time.sleep(2)
     switch_button.click()
+    time.sleep(1)
     login_field = driver.find_element_by_xpath('//*[@id="input_0"]')
     password_field = driver.find_element_by_xpath('//*[@id="input_1"]')
     time.sleep(2)
-    continue_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[1]/div/form/div/div[1]/div[2]/button/span')
+    continue_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[1]/div/form/div/div[1]/div[2]/button')
     login_field.send_keys(username)
     time.sleep(2)
     password_field.send_keys(password)
@@ -192,6 +191,31 @@ def loginNation(driver, url, username, password):
     debt = float(debt.replace('£',''))
 
     return debt
+
+def getVanguard(driver, url, username, password):
+    driver.get(url)
+    time.sleep(7)
+    login_button = driver.find_element_by_xpath('//*[@id="utility-logon"]')
+    login_button.click()
+    time.sleep(7)
+    login_field = driver.find_element_by_xpath('//*[@id="__GUID_1007"]')
+    password_field = driver.find_element_by_xpath('//*[@id="__GUID_1008"]')
+    time.sleep(2)
+    continue_button = driver.find_element_by_xpath('/html/body/div[4]/div/div[3]/div/div/div/div/form/div[2]/div[3]/button')
+    login_field.send_keys(username)
+    time.sleep(2)
+    password_field.send_keys(password)
+    time.sleep(3)
+    continue_button.click()
+    time.sleep(5)
+    balance = driver.find_element_by_xpath('/html/body/div[4]/div/div[1]/div/div[2]/div[1]/div[1]/section/div/div[2]/div/div[2]/div/div/span')
+    etfs = balance.text
+
+
+    # debt = debt.replace(',','')
+    etfs = float(etfs.replace('£',''))
+
+    return etfs
     
 def main():
     today = date.today()
@@ -202,35 +226,44 @@ def main():
     urlGooglePro = urlPro
     urlFI = "https://app.blockfi.com/signin"
     urlNation = "https://my.moneydashboard.com/dashboard"
+    urlVan = "https://www.vanguardinvestor.co.uk/"
+    urlBinance = "https://accounts.binance.com/en/login"
     
     password = password212
     passwordFI = password + '!'
     driver = load_driver()
+    #Vanguard
+    print("ETFs")
+    etfs = getVanguard(driver, urlVan, 'cforsyth4', password)
+    print(etfs)
+
     #Nationwide
     print("debt collection")
     liabilites = loginNation(driver, urlNation, username, password)
     print(liabilites)
-    # liabilites = -1600
 
-    #BLOCKFI
+    #BLOCKFI - ethereum 
     print("block fi portfolio")
     totalFI,netProfitFI = loginFI(driver, urlFI, username, passwordFI)
     print(totalFI,netProfitFI)
-    # totalFI     = 1000
-    # netProfitFI = 10
+
+    #Exodus - Cardano
+    print("Exodus portfolio")
+    totalExodus = 400
+    netProfitExodus = 23
     
-    #TRADING212
+    #TRADING212 and metal
     print("trading 212 protfolio")
     login212(driver, url212, username, password)
     time.sleep(20)
     total212,netProfit212,pecentageProfit212,cash212,metals = getdata212(driver)
     print(total212,netProfit212,cash212)
+    
     print("metals")
+    silverPerOz = 20
+    physicalMetal = 3 * silverPerOz
+    metals = physicalMetal + metals
     print(metals)
-    # total212 = float(11110.60)
-    # netProfit212 = float(2295.57)
-    # totalwithcash = float(12226.56)
-    # cash212 = float(totalwithcash - total212)
 
     #ETORO - protected
     # totalToro,netProfitToro,cashToro = getdataToro(driver,urlEtoro,password)
@@ -243,16 +276,13 @@ def main():
     print("coinbase pro protfolio")
     totalPro,netProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9,urlETH)
     print(totalPro,netProfitPro,cashPro)
-    # totalPro = 2530
-    # netProfitPro = 2500
-    # cashPro = 0
 
     driver.close()
     driver.quit()
     ##################
     #CALCULATIONS on data
-    totalAssets = round(total212+totalPro+totalEtoro+totalFI+metals,3)
-    netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI,3)
+    totalAssets = round(total212+totalPro+totalEtoro+totalFI+metals+etfs+totalExodus,3)
+    netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI+netProfitExodus,3)
     totalAssetsInvested = round(totalAssets-netProfit,3)
     percentageProfit = round(netProfit/totalAssetsInvested,5)
     netCash = round(cash212+cashPro,3)
@@ -263,9 +293,14 @@ def main():
     # plt.style.use('dark_background')
     # plt.style.use('fivethirtyeight') 
     ##if percentage profit or profit negative - default to zero and subtract from total
+    if(totalLiabilites>0):
+        netCash += totalLiabilites
+        totalLiabilites = 0
+
+    #at a loss - treat as debt to pay off
     if (netProfit<0):
         print("uh oh stinky")
-        totalLiabilites = totalLiabilites + netProfit
+        totalLiabilites += netProfit
         netProfit = 0
         percentageProfit = 0
 
@@ -492,18 +527,23 @@ def main():
     titleNet = 'NET worth: £'+str(netCurrent)+'\n Projection at current rate (10 years): £'+str(projection)+'\n 4% rule to earn £'+str(goalEarningperMonth)+' a month: £'+str(nestEgg) +'\n Currently could make a month @6%: £'+ str(round((netCurrent*0.06)/12,3))+'\n Alltimehigh: £'+ str(round(max_value,3)) +'\n Alltimehigh difference: £'+ str(round(-1*(max_value-netCurrent),3)) +'\n  Increase this last 30 days: £'+ str(increase_month_net) +'\n percentage increase last 30 days: % '+ str(round(increase_month_percentage,3)) + '\nContributions last 30 days: £' + str(round(increase_month_contribution,3)) + '\nHourly salary over a year(make a year): £' + str(hourly_salary)
     
     dfNet.plot(figsize=(10,15))
-    axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, color = 'lightgreen')
+    axNet = dfNet.plot(x = 'date',title=titleNet, rot=90, fontsize='10', grid=True,sharex=False,linewidth=5, color = 'green')
     axNet.set_xlabel("Sum = Amount of days measured since 2019-02-21")
     axNet.set_ylabel("Net £")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
     ################# Pie chart
+    stonksProfit = (netProfit212+netprofitEtoro)
+    if stonksProfit<0:
+        print("stonks at a loss")
+        stonksProfit = 0
+
     titlePie = 'GOAL AMOUNTS \nStocks:Crypto 77:22 (3.5): '+str(round((total212 + totalEtoro)/(totalPro + totalFI),3)) + '\nAmount in Main:' + str(total212*0.77) + '\nAmount in ARK:' + str(total212*0.15) + '\nAmount in ARKG:' + str(total212*0.075) + '\nAmount in ARK(rest):' + str(total212*0.0188) + '\nAmount in experiments:' + str(round(total212*0.03,3))
-    labels = ['StocksInvested (70%)', 'StocksProfit' ,'CryptoInvested (20)%','CryptoProfit', 'Debt (0%)','Cash (10%)','Metals']
-    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), (netProfit212+netprofitEtoro), ((totalPro + totalFI) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash, metals]
+    labels = ['IndividualStocksInvested', 'IndividualStocksProfit' ,'CryptoInvested','CryptoProfit', 'Debt (0%)','Cash (10%)','Metals', 'ETFs']
+    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), stonksProfit, ((totalPro + totalFI + totalExodus) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash, metals,etfs]
     dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
     
-    axPie = dfPie.plot.pie(y='Assets/liabilites', title = titlePie,figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen'])
+    axPie = dfPie.plot.pie(y='Assets/liabilites', title = titlePie,figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen','silver','brown'])
 
     #save graphs#
     fig = ax.get_figure()
