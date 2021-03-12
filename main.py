@@ -79,7 +79,7 @@ def getdata212(driver):
     
     return total,int(netProfit),float(pecentageProfit),cash,isaTotal
             
-def getdataPro(driver,url,urlPro9,urlETH):
+def getdataPro(driver,url,urlPro9,urlETH,putIn):
     driver.get(url)
     time.sleep(5)                              
     fetch_field = driver.find_element_by_xpath('//*[@id="t-formula-bar-input"]/div').text
@@ -108,7 +108,7 @@ def getdataPro(driver,url,urlPro9,urlETH):
     # avgPrice = 7700
     # costBasis = avgPrice*BTC
     # sold out initial investment so cost basis is now current contributions since 19/01/2021
-    costBasisBTC = 0 + 0 + 0
+    costBasisBTC = putIn
     costBasisETH = 0 + 0 + 0
     gainBTC = (BTC_price*BTC)-costBasisBTC
     gainETH = (ETH_price*ETH)-costBasisETH
@@ -168,7 +168,7 @@ def loginNation(driver, url, username, password):
     close_button = driver.find_element_by_xpath('/html/body/div[4]/md-dialog/md-dialog-actions/button')
     time.sleep(1) 
     close_button.click()
-    time.sleep(1)
+    time.sleep(2)
     switch_button = driver.find_element_by_xpath('/html/body/ui-view/div[2]/div[2]/div/div[2]/a')
     time.sleep(2)
     switch_button.click()
@@ -242,16 +242,37 @@ def main():
     liabilites = loginNation(driver, urlNation, username, password)
     print(liabilites)
 
-    #BLOCKFI - ethereum 
+    #BLOCKFI - ethereum  and usdc
     print("block fi portfolio")
     totalFI,netProfitFI = loginFI(driver, urlFI, username, passwordFI)
     print(totalFI,netProfitFI)
+    cashBlockFI = 574
+    totalFI -= cashBlockFI
 
     #Exodus - Cardano
     print("Exodus portfolio")
-    totalExodus = 400
-    netProfitExodus = 23
-    
+    totalExodus = 1112 #maintain
+    netProfitExodus = totalExodus - 1000
+
+    #celcius - btc and usdc
+    print("celsius portfolio")
+    totalCashCelsius = 100 #make 1000 CASH
+
+    #binance - AGI
+    print("binance portfolio")
+    totalBinance = 338
+    netProfitBinance = totalBinance - 300
+
+    #Metamask - Hex 15th Feb 2022
+    print("Hex")
+    totalHex = 100
+
+    #ETORO - protected
+    print("Etoro protfolio")
+    totalEtoro = 257
+    netprofitEtoro = 103
+    print(totalEtoro,netprofitEtoro)
+
     #TRADING212 and metal
     print("trading 212 protfolio")
     login212(driver, url212, username, password)
@@ -265,27 +286,26 @@ def main():
     metals = physicalMetal + metals
     print(metals)
 
-    #ETORO - protected
-    # totalToro,netProfitToro,cashToro = getdataToro(driver,urlEtoro,password)
-    print("Etoro protfolio")
-    totalEtoro = 257
-    netprofitEtoro = 103
-    print(totalEtoro,netprofitEtoro)
-
     #BITCOIN - figure out way to automate cost basis
     print("coinbase pro protfolio")
-    totalPro,netProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9,urlETH)
+    putInPro = 280
+    totalPro,netProfitPro,cashPro = getdataPro(driver,urlGooglePro,urlPro9,urlETH,putInPro)
     print(totalPro,netProfitPro,cashPro)
-
+    
     driver.close()
     driver.quit()
     ##################
     #CALCULATIONS on data
-    totalAssets = round(total212+totalPro+totalEtoro+totalFI+metals+etfs+totalExodus,3)
-    netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI+netProfitExodus,3)
+    totalAssets = round(total212+totalPro+totalEtoro+totalFI+metals+etfs+totalExodus+totalHex+totalBinance,3)
+    netProfit = round(netProfit212+netProfitPro+netprofitEtoro+netProfitFI+netProfitExodus+netProfitBinance,3)
     totalAssetsInvested = round(totalAssets-netProfit,3)
     percentageProfit = round(netProfit/totalAssetsInvested,5)
-    netCash = round(cash212+cashPro,3)
+    netCash = round(cash212+cashPro+cashBlockFI+totalCashCelsius,3)
+
+    InvestedStocks = 0
+    ProfitStocks =0
+    InvestedCrypto =0
+    ProfitCrypto =0
 
     print("debt")
     totalLiabilites = 0 + liabilites
@@ -423,8 +443,8 @@ def main():
     
     #profit percentage difference between months
     volMon['volatility'] = -1* (volMon['percentageProfit'] - volMon['percentageProfit'].shift(-1))
-    changeSoFar = ((percentageProfit/100) - volMon['percentageProfit'].iloc[-2])
-    volMon = volMon.replace(np.nan,changeSoFar)
+    # changeSoFar = ((percentageProfit/100) - volMon['percentageProfit'].iloc[-1])
+    # volMon = volMon.replace(np.nan,changeSoFar)
     volMon = volMon.drop(['percentageProfit'], axis=1)
     column = volMon['volatility']
     max_value_volatility = column.max()
@@ -540,7 +560,7 @@ def main():
 
     titlePie = 'GOAL AMOUNTS \nStocks:Crypto 77:22 (3.5): '+str(round((total212 + totalEtoro)/(totalPro + totalFI),3)) + '\nAmount in Main:' + str(total212*0.77) + '\nAmount in ARK:' + str(total212*0.15) + '\nAmount in ARKG:' + str(total212*0.075) + '\nAmount in ARK(rest):' + str(total212*0.0188) + '\nAmount in experiments:' + str(round(total212*0.03,3))
     labels = ['IndividualStocksInvested', 'IndividualStocksProfit' ,'CryptoInvested','CryptoProfit', 'Debt (0%)','Cash (10%)','Metals', 'ETFs']
-    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), stonksProfit, ((totalPro + totalFI + totalExodus) - (netProfitPro + netProfitFI)), (netProfitPro + netProfitFI), (-1* totalLiabilites), netCash, metals,etfs]
+    sizes = [((total212 + totalEtoro)-(netProfit212 + netprofitEtoro)), stonksProfit, ((totalPro + totalFI + totalExodus + totalHex +totalBinance) - (netProfitPro + netProfitFI + netProfitExodus + netProfitBinance)), (netProfitPro + netProfitFI + netProfitExodus + netProfitBinance), (-1* totalLiabilites), netCash, metals, etfs]
     dfPie = pd.DataFrame({'Assets/liabilites':sizes},index = labels)
     
     axPie = dfPie.plot.pie(y='Assets/liabilites', title = titlePie,figsize=(10,15), autopct = "%.2f%%", colors = ['royalblue', 'dodgerblue','gold','goldenrod','red','yellowgreen','silver','brown'])
