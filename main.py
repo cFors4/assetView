@@ -121,7 +121,11 @@ def getVanguard(driver, url, username, password):
     login_field = driver.find_element_by_xpath('//*[@id="__GUID_1007"]')
     password_field = driver.find_element_by_xpath('//*[@id="__GUID_1008"]')
     time.sleep(2)
+<<<<<<< HEAD
+    continue_button = driver.find_element_by_xpath('/html/body/div[4]/div/div[2]/div/div/div/div/form/div[2]/div[3]/button')
+=======
     continue_button = driver.find_element_by_xpath('/html/body/div[4]/div/div[3]/div/div/div/div/form/div[2]/div[3]/button')
+>>>>>>> main
     login_field.send_keys(username)
     time.sleep(2)
     password_field.send_keys(password)
@@ -248,6 +252,10 @@ def mergePdfs():
     pdf6File = open('monthly.pdf', 'rb')
     pdf8File = open('volatilityMonth.pdf', 'rb')
     pdf9File = open('percentageMonth.pdf', 'rb')
+<<<<<<< HEAD
+    pdf10File = open('histogram.pdf', 'rb')
+=======
+>>>>>>> main
 
     
     # Read the files that you have opened
@@ -259,7 +267,12 @@ def mergePdfs():
     pdf6Reader = PyPDF2.PdfFileReader(pdf6File)
     pdf8Reader = PyPDF2.PdfFileReader(pdf8File)
     pdf9Reader = PyPDF2.PdfFileReader(pdf9File)
+<<<<<<< HEAD
+    pdf10Reader = PyPDF2.PdfFileReader(pdf10File)
+
+=======
     
+>>>>>>> main
     ############ ORDER PDFS
     # Create a new PdfFileWriter object which represents a blank PDF document
     pdfWriter = PyPDF2.PdfFileWriter()
@@ -283,7 +296,16 @@ def mergePdfs():
     for pageNum in range(pdf8Reader.numPages):
         pageObj = pdf8Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
+<<<<<<< HEAD
+
+    # Loop through all the pagenumbers for the first document - monthly volatility
+    for pageNum in range(pdf10Reader.numPages):
+        pageObj = pdf10Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+
+=======
     
+>>>>>>> main
     # Loop through all the pagenumbers for the first document - monthly percentage
     for pageNum in range(pdf9Reader.numPages):
         pageObj = pdf9Reader.getPage(pageNum)
@@ -432,6 +454,13 @@ def main():
     axVolMon.set_ylabel("Change of Percentage profit per Month - Volatility")
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
+    ##############volatility monthly distribution
+    #drop volatility mean and last row
+    volMon = volMon.drop(['volatilityMean'], axis=1)
+    #plot histogram
+    axHistVol = volMon.plot(kind='hist',bins=5)
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
+
     ##############bar percentage monthly
     percMon = df3[['date','percentageProfit']].copy()
     percMon['date'] = pd.to_datetime(percMon['date'])
@@ -546,6 +575,8 @@ def main():
     fig8.savefig('volatilityMonth.pdf', bbox_inches = "tight")
     fig9 = axPercMon.get_figure()
     fig9.savefig('percentageMonth.pdf', bbox_inches = "tight")
+    fig10 = axHistVol.get_figure()
+    fig10.savefig('histogram.pdf', bbox_inches = "tight")
 
     mergePdfs()
 
