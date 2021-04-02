@@ -248,6 +248,7 @@ def mergePdfs():
     pdf6File = open('monthly.pdf', 'rb')
     pdf8File = open('volatilityMonth.pdf', 'rb')
     pdf9File = open('percentageMonth.pdf', 'rb')
+    pdf10File = open('histogram.pdf', 'rb')
 
     
     # Read the files that you have opened
@@ -259,7 +260,8 @@ def mergePdfs():
     pdf6Reader = PyPDF2.PdfFileReader(pdf6File)
     pdf8Reader = PyPDF2.PdfFileReader(pdf8File)
     pdf9Reader = PyPDF2.PdfFileReader(pdf9File)
-    
+    pdf10Reader = PyPDF2.PdfFileReader(pdf10File)
+
     ############ ORDER PDFS
     # Create a new PdfFileWriter object which represents a blank PDF document
     pdfWriter = PyPDF2.PdfFileWriter()
@@ -283,7 +285,12 @@ def mergePdfs():
     for pageNum in range(pdf8Reader.numPages):
         pageObj = pdf8Reader.getPage(pageNum)
         pdfWriter.addPage(pageObj)
-    
+
+    # Loop through all the pagenumbers for the first document - monthly volatility
+    for pageNum in range(pdf10Reader.numPages):
+        pageObj = pdf10Reader.getPage(pageNum)
+        pdfWriter.addPage(pageObj)
+
     # Loop through all the pagenumbers for the first document - monthly percentage
     for pageNum in range(pdf9Reader.numPages):
         pageObj = pdf9Reader.getPage(pageNum)
@@ -434,7 +441,10 @@ def main():
 
     ##############volatility monthly distribution
     #drop volatility mean and last row
+    volMon = volMon.drop(['volatilityMean'], axis=1)
     #plot histogram
+    axHistVol = volMon.plot(kind='hist',bins=5)
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
 
     ##############bar percentage monthly
     percMon = df3[['date','percentageProfit']].copy()
@@ -550,6 +560,8 @@ def main():
     fig8.savefig('volatilityMonth.pdf', bbox_inches = "tight")
     fig9 = axPercMon.get_figure()
     fig9.savefig('percentageMonth.pdf', bbox_inches = "tight")
+    fig10 = axHistVol.get_figure()
+    fig10.savefig('histogram.pdf', bbox_inches = "tight")
 
     mergePdfs()
 
