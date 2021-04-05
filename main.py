@@ -158,7 +158,7 @@ def getCoin(driver, url, username, password):
     time.sleep(3)
     currency = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[1]/div/div[2]/div[3]/div/div[2]/div/div[1]/div[3]')
     currency.click()
-    time.sleep(6)
+    time.sleep(12)
     stats = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[1]/div/div[3]/div[1]/button[3]')
     stats.click()
     time.sleep(2)
