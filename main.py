@@ -139,13 +139,13 @@ def getVanguard(driver, url, username, password):
 def getCoin(driver, url, username, password):
     driver.get(url)
     time.sleep(5)
-    login_button = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[2]/a[2]/button')
-    login_button.click()
+    login_button = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[2]/button[1]')
+    login_button.click()                        
     time.sleep(7)
-    login_field = driver.find_element_by_xpath('//*[@id="__next"]/main/form/div[2]/input')
-    password_field = driver.find_element_by_xpath('//*[@id="__next"]/main/form/div[5]/input')
+    login_field = driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div[3]/input')
+    password_field = driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div[4]/div[2]/input')
     time.sleep(2)
-    continue_button = driver.find_element_by_xpath('//*[@id="__next"]/main/form/button')
+    continue_button = driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div[5]/button')
     login_field.send_keys(username)
     time.sleep(2)
     password_field.send_keys(password)
@@ -158,7 +158,7 @@ def getCoin(driver, url, username, password):
     time.sleep(3)
     currency = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[1]/div/div[2]/div[3]/div/div[2]/div/div[1]/div[3]')
     currency.click()
-    time.sleep(6)
+    time.sleep(18)
     stats = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[1]/div/div[3]/div[1]/button[3]')
     stats.click()
     time.sleep(2)
@@ -171,7 +171,7 @@ def getCoin(driver, url, username, password):
     profit = profit.text.replace(',','')
     profit = float(profit[3:])
 
-    cash = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[2]/div[2]/table/tbody/tr[4]/td[4]/div')
+    cash = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[2]/div[2]/table/tbody/tr[4]/td[5]/div')
     cash = cash.text.replace(',','')
     cash = float(cash[1:7])
 
@@ -418,6 +418,7 @@ def main():
     volMon = volMon.groupby(pd.Grouper(key='date', freq='1M')).mean()
     volMon.index = volMon.index.strftime('%B, %Y')
     volMon = volMon.dropna()
+    volMon['0'] = 0
     
     #profit percentage difference between months
     volMon['volatility'] = -1* (volMon['percentageProfit'] - volMon['percentageProfit'].shift(-1))
@@ -442,6 +443,7 @@ def main():
     ##############volatility monthly distribution
     #drop volatility mean and last row
     volMon = volMon.drop(['volatilityMean'], axis=1)
+    volMon = volMon.drop(['0'], axis=1)
     #plot histogram
     axHistVol = volMon.plot(kind='hist',bins=5)
     plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size': 15})
