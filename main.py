@@ -139,7 +139,7 @@ def getVanguard(driver, url, username, password):
 def getCoin(driver, url, username, password):
     driver.get(url)
     time.sleep(5)
-    login_button = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[2]/button[1]')
+    login_button = driver.find_element_by_xpath('/html/body/div/div/div[1]/div[1]/div[1]/div/div[2]/button[1]')
     login_button.click()                        
     time.sleep(7)
     login_field = driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div[3]/input')
@@ -153,25 +153,25 @@ def getCoin(driver, url, username, password):
     continue_button.click()
     time.sleep(5)
     
-    currency_selector = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[1]/div/div[2]/div[3]/div/div/button')
+    currency_selector = driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div[1]/div[1]/div/div[1]/div/div[2]/div[3]/div/div/button')
     currency_selector.click()
     time.sleep(3)
-    currency = driver.find_element_by_xpath('//*[@id="__next"]/div/div[1]/div[1]/div/div[1]/div/div[2]/div[3]/div/div[2]/div/div[1]/div[3]')
+    currency = driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div[1]/div[1]/div/div[1]/div/div[2]/div[3]/div/div[2]/div/div[1]/div[3]')
     currency.click()
     time.sleep(18)
-    stats = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[1]/div/div[3]/div[1]/button[3]')
+    stats = driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div[2]/div/div/div[3]/div[1]/div/div[3]/div[1]/button[3]')
     stats.click()
     time.sleep(2)
-
-    total = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[1]/div/div[1]/div[1]')
+                                        
+    total = driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div[2]/div/div/div[3]/div[1]/div/div[1]/div[1]')
     total = total.text.replace(',','')
     total = float(total.replace('£',''))
 
-    profit = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[1]/div/div[3]/div[2]/div[3]/div/div[1]/div/span[1]')
+    profit = driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div[2]/div/div/div[3]/div[1]/div/div[3]/div[2]/div[3]/div/div[1]/div/span[1]')
     profit = profit.text.replace(',','')
     profit = float(profit[3:])
 
-    cash = driver.find_element_by_xpath('//*[@id="__next"]/div/div[2]/div/div/div[3]/div[2]/div[2]/table/tbody/tr[4]/td[5]/div')
+    cash = driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div[2]/div/div/div[3]/div[2]/div[2]/table/tbody/tr[4]/td[4]/div')
     cash = cash.text.replace(',','')
     cash = float(cash[1:7])
 
